@@ -8,3 +8,20 @@ According to the author:
 src: https://www.researchgate.net/publication/258559018_PRAIA_-_Platform_for_Reduction_of_Astronomical_Images_Automatically
 
 This repository contains the `Dockerfile` used to build a docker image for the PRAIA_astrometry application.
+
+### How to build the image
+
+ git clone git@github.com:LIneA-Science/praia_astrometry.git
+ cd praia_astrometry
+ docker build -t praia .
+
+### How to commit and push
+
+Create a container before this.
+
+ ```sh
+ docker login
+ docker commit <container_id> linea/praia:v20_09>     # e.g: v20_09
+ docker tag <image_id> linea/praia:v20_09             # the id of the image created before
+ docker push linea/praia:v20_09  
+ ```
