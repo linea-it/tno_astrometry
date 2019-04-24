@@ -27,3 +27,12 @@ Create a container before this.
  docker tag <image_id> linea/praia:v20_09             # the id of the image created before
  docker push linea/praia:v20_09  
  ```
+
+How to run PRAIA
+
+ ```sh
+ docker run -it --name teste -v $PWD:/data -v /archive:/archive linea/praia:v30_06
+ docker exec teste sh -c '/app/PRAIA_astrometry_30_06 < /data/PRAIA_astrometry_30_06_10.dat'
+ ```
+
+OBS: Assuming you're connected to the LIneA's environment.
