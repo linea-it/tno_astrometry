@@ -1,4 +1,4 @@
-/archive/external_catalogs/2MASS/                 | root directory under which the 2MASS catalogue sub-directories lay 
+/archive/external_catalogs/2MASS/2MASS            | root directory under which the 2MASS catalogue sub-directories lay 
 /archive/external_catalogs/UCAC4/u4b/             | root directory under which the UCAC4 catalogue sub-directories lay 
 /archive/external_catalogs/UCAC5/                 | root directory under which the UCAC5 catalogue directory lays
 /archive/external_catalogs/gaia/GAS/              | root directory under which the complete GAIA catalogue (GAIA_1) sub-directories lay
