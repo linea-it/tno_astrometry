@@ -27,15 +27,15 @@ COPY run.py $APP_PATH
 
 # Compile Praia Header Extraction
 # COPY src/${PRAIA_HEADER}.f ${APP_PATH}
-RUN gfortran ${PRAIA_HEADER}.f -o ${PRAIA_HEADER}
+RUN gfortran ${PRAIA_HEADER}.f -o /bin/${PRAIA_HEADER}
 
 # Compile Praia Astrometry
 # COPY src/${PRAIA_ASTROMETRY}.f ${APP_PATH}
-RUN gfortran ${PRAIA_ASTROMETRY}.f -o ${PRAIA_ASTROMETRY}
+RUN gfortran ${PRAIA_ASTROMETRY}.f -o /bin/${PRAIA_ASTROMETRY}
 
 # Compile Praia Target Search
 # COPY src/${PRAIA_TARGET}.f ${APP_PATH}
-RUN gfortran ${PRAIA_TARGET}.f -o ${PRAIA_TARGET}
+RUN gfortran ${PRAIA_TARGET}.f -o /bin/${PRAIA_TARGET}
 
 # Clear 
 RUN rm ${APP_PATH}/*.f 

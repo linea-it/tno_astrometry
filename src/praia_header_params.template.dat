@@ -1,0 +1,166 @@
+{INPUT_FILE}| input list of fits images for header extraction
+{OUTPUT_FILE}| output file with extracted information
+1       |-----------------------------------------| FITS header key: FITS header extension key 
+WINSEC1 |-----------------------------------------| FITS header key: dimension of axes (1,2;x,y) together: windows section key
+NAXIS1  |-----------------------------------------| FITS header key: dimension of axis 1 (x) 
+NAXIS2  |-----------------------------------------| FITS header key: dimension of axis 2 (y) 
+OBJECT  |-----------------------------------------| FITS header key: Object     
+FILTER  |-----------------------------------------| FITS header key: Filter     
+RA_CENT |-----------------------------------------| FITS header key: Right Ascension
+DEC_CENT|-----------------------------------------| FITS header key: Declination 
+JD      |-----------------------------------------| FITS header key: Julian Date
+MJD-OBS |-----------------------------------------| FITS header key: Modified Julian Date
+DATE-OBS|-----------------------------------------| FITS header key: Observation Date, UTC
+TIME-OBS|-----------------------------------------| FITS header key: Start instant of exposure, UT
+TIME-END|-----------------------------------------| FITS header key: End instant of exposure, UT
+TIME    |-----------------------------------------| FITS header key: Start and End exposure instants, UT
+EXPTIME |-----------------------------------------| FITS header key: Exposure time (seconds)
+00 00 00.525                                      | Time offset (hh mm ss.sss)  
+01|-----------------------------------------------| (1,2) (or x, y) axes dimensions stamp key
+01|-----------------------------------------------| Time stamp key
+04|-----------------------------------------------| Right ascension stamp key            
+02|-----------------------------------------------| Declination stamp key                
+01|-----------------------------------------------| RA---TAN coordinate units: 01 = DEG; 02 = RAD; 03 = HOUR
+01|-----------------------------------------------| DEC--TAN coordinate units: 01 = DEG; 02 = RAD;
+01|-----------------------------------------------| WCS convention key: (1) Standard; (2) Old (AIPS); (3) SAO pol. fit
+13|-----------------------------------------------| SAO pol. fit: No. of last coefficient for X (RA)  (0...Nx)
+13|-----------------------------------------------| SAO pol. fit: No. of last coefficient for Y (DEC) (0...Ny)
+02|-----------------------------------------------| SAO pol. fit: X (RA)  coordinate units: 01 = DEG; 02 = RAD; 03 = HOUR
+02|-----------------------------------------------| SAO pol. fit: Y (DEC) coordinate units: 01 = DEG; 02 = RAD
+AMDX    |-----------------------------------------| SAO pol. fit X: root of coefficient key string
+AMDY    |-----------------------------------------| SAO pol. fit Y: root of coefficient key string
+******************************************************************************************************************************
+                                          
+  ** For a correct filling up of the above fields, please read the notes below carefully ** 
+           
+
+                                                     
+** Choose the axes dimensions stamp key according to one of the following options:
+
+
+01 - x and y axes dimensions furnished in separate keys (usually "NAXIS1" and "NAXIS2" for x and y respectivelly).
+
+02 - x and y axes dimensions furnished together in one key (usually "WINSEC"), in the form [N1_1:N1_2,N2_1:N2_2],
+     where:
+
+     NAXIS1 = N1_2 - N1_1 + 1
+     NAXIS2 = N2_2 - N2_1 + 1
+
+
+                                                     
+** Choose the time stamp key according to one of the following options:
+
+
+01 - Date and start time furnished together in one key: yr mo day (day mo yr) and hh mm ss.sss (usually
+     at "DATE-OBS" key).
+
+
+02 - Date and start time in separate keys: yr mo day (day mo yr) usually furnished in "DATE-OBS" key.
+
+     If the exposure time is given, only the UT start time (usually hh mm ss.sss) is needed, and given in a
+     separate key (usually "UT" or "TIME-BEG" keys).
+
+     If the exposure time is not given, then the UT start and end exposure times must be furnished. They
+     can be evoked by separate keys (usually "UT"/"TIME-BEG" and "TIME-END" keys), or evoked by the same
+     key (user-defined, usually "TIME"), usually in the hh mm ss.sss format.
+
+     The start and end times may be also furnished in hh mm.mmm or even in sss.sss format. 
+
+
+03 - Start time in Julian Date (JD): the date is computed from the JD (usually furnished by the
+     "JD" key); the exposure time must be also furnished.
+
+
+04 - Start time in Modified Julian Date (MJD): the date is computed from the MJD (usually
+     furnished by the "MJD" key); the exposure time must be also furnished.
+
+
+
+
+** Choose the Right Ascension stamp key according to one of the following options:
+
+
+
+
+01 - RA in sexagesimal format:  hh mm ss.sss  (hours)
+
+02 - RA in sexagesimal format:  dg mm ss.sss  (degrees)
+
+03 - RA in hours and decimal fraction:  hh.hhhhh
+
+04 - RA in degrees and decimal fraction:  dg.dgdgdg
+
+05 - RA in radians:  rad.radradrad
+
+06 - RA from tangent plane projection (RA---TAN). Associated WCS keywords/values must be furnished
+     in the FITS headers. (see WCS convention keys)
+
+
+
+
+
+** Choose the declination stamp key according to one of the following options:
+
+
+
+
+01 - Dec in sexagesimal format:  dg mm ss.sss  (degrees)
+
+02 - Dec in degrees and decimal fraction:  dg.dgdgdg
+
+03 - Dec in radians: rad.radradrad
+
+04 - Dec from tangent plane projection ("DEC--TAN"). Associated WCS keywords/values must be furnished
+     in the FITS headers. (see WCS convention keys)
+
+
+
+
+
+**** WCS convention keys (RA---TAN, DEC--TAN) for alternative (RA,DEC) extraction:
+
+
+01 - Standard system.  Requires the following keys/values:
+
+CRPIX1                        
+CRVAL1 
+CD1_1
+CD1_2
+
+CRPIX2                        
+CRVAL2 
+CD2_1
+CD2_2
+
+
+
+
+02 - Old system (AIPS). Requires the following keys/values:
+
+CRPIX1                        
+CRVAL1 
+CDELT1 
+CROTA1 
+
+CRPIX2 
+CRVAL2 
+CDELT2 
+CROTA2  
+
+
+03 - SAO polynomial system. Astrometric (x,y) polynomial of Nth-degree,
+     relating (X,Y) standard coordinates with (x,y) CCD coordinates. 
+     Usually, the polynomial coefficients come from actual astrometric
+     adjustments with regard to some reference catalogue. The coefficients
+     of the (X,Y) polynomial model obey the relation:
+
+
+     X=a0+a1*x+a2*y+a3*x^2+a4*x*y+a5*y^2+a6*x^3+a7*x^2*y+a8*x*y^2+a9*y^3+...
+
+     Y=b0+b1*x+b2*y+b3*x^2+b4*x*y+b5*y^2+b6*x^3+b7*x^2*y+b8*x*y^2+b9*y^3+...
+
+     The (X,Y) coefficient keys are usually given in the form (AMDX..., AMDY...).
+
+     The root string of the X and Y coefficient keys, and coefficient values,
+     are required. 
+

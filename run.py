@@ -23,4 +23,7 @@ exposures = [
     {'filename': '/data/D00233221_g_c20_r2357p02_immasked.fits'}
 ]
 
-run_praia_header(exposures)
+# TODO Adicionar logs nessa funcao.
+praia_header_output = run_praia_header(exposures)
+
+print("Terminou")
