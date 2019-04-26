@@ -1,16 +1,37 @@
-FROM alpine
-MAINTAINER Carlos Adean <carlosadean@linea.gov.br>
+FROM python:3.7
+MAINTAINER Glauber Costa Vila Verde <galuber.vila.verde@gmail.com>
 
-ENV APP_DIR="/app"
-ENV DATA_DIR="/data"
-ENV PRAIA_VERSION="30_06"
-ENV PATH="/app:${PATH}"
+ENV APP_PATH=/app
+ENV DATA_DIR=/data
+ENV PRAIA_HEADER=PRAIA_header_extraction_30_08
+ENV PRAIA_ASTROMETRY=PRAIA_astrometry_30_06
+ENV PRAIA_TARGET=PRAIA_targets_search_20_03
 
-RUN apk --no-cache --update-cache add gfortran
-RUN mkdir ${APP_DIR} 
-RUN mkdir ${DATA_DIR}
 
-WORKDIR ${APP_DIR}
-COPY PRAIA_astrometry_${PRAIA_VERSION}.f ${APP_DIR}
+RUN apt-get update && apt-get install -y  \
+                gfortran \
+            && rm -rf /var/lib/apt/lists/*
 
-RUN gfortran PRAIA_astrometry_${PRAIA_VERSION}.f -o PRAIA_astrometry_${PRAIA_VERSION}
+
+RUN mkdir $APP_PATH
+
+WORKDIR $APP_PATH
+
+RUN pip install --upgrade pip && pip install \
+        psycopg2-binary \
+        SQLAlchemy
+
+# Compile Praia Header Extraction
+COPY src/${PRAIA_HEADER}.f ${APP_PATH}
+RUN gfortran ${PRAIA_HEADER}.f -o ${PRAIA_HEADER}
+
+# Compile Praia Astrometry
+COPY src/${PRAIA_ASTROMETRY}.f ${APP_PATH}
+RUN gfortran ${PRAIA_ASTROMETRY}.f -o ${PRAIA_ASTROMETRY}
+
+# Compile Praia Target Search
+COPY src/${PRAIA_TARGET}.f ${APP_PATH}
+RUN gfortran ${PRAIA_TARGET}.f -o ${PRAIA_TARGET}
+
+# Clear 
+RUN rm ${APP_PATH}/*.f 

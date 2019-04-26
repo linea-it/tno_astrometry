@@ -1,0 +1,8 @@
+1                                                 | input file type: 1 - list of xy files ; 2 - output target file with offsets; 3 - MPC format
+list1.xy                                          | input file  : list of xy files from PRAIA reduction
+targets                                           | input file  : list of targets (movable or not, if any)
+offset_target2                                    | output file : log file with output of intermediary/main results from run
+01.5000                                           | error radius (arcsec) for cross-identification of common stars among all xy fields
+************************************************************************************************************************************************
+
+
