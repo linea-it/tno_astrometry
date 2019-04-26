@@ -20,7 +20,7 @@ def create_input_file(exposures):
 
 def create_params_file(input_file, output_file):
 
-    with open("src/praia_header_params.template.dat") as template:
+    with open(os.path.join(os.getenv("APP_PATH","src/praia_header_params.template.dat")) as template:
 
         data = template.read()
         data = data.replace('{INPUT_FILE}', input_file.ljust(50))
