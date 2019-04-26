@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import os
 import logging
 from praia_header import run_praia_header
