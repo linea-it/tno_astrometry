@@ -26,6 +26,7 @@ COPY src/ $APP_PATH/src
 
 COPY run.py $APP_PATH
 COPY praia_header.py $APP_PATH
+COPY praia_astrometry.py $APP_PATH
 
 # Compile Praia Header Extraction
 # COPY src/${PRAIA_HEADER}.f ${APP_PATH}
