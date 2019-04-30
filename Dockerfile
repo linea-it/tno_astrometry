@@ -19,7 +19,8 @@ WORKDIR $APP_PATH
 
 RUN pip install --upgrade pip && pip install \
     psycopg2-binary \
-    SQLAlchemy
+    SQLAlchemy \
+    humanize
 
 COPY src/ $APP_PATH/src
 
