@@ -36,3 +36,18 @@ How to run PRAIA
  ```
 
 OBS: Assuming you're connected to the LIneA's environment.
+
+
+
+Exemplo de comando de execução:
+
+```
+docker run -it --rm -v $PWD/data:/data -v /archive/tno/ccd_images:/images -v $PWD/:/app -v /archive/external_catalogs:/external_catalogs:ro linea/tno_astrometry:latest python /app/run.py Eris
+
+```
+
+é Necessário montar os diretórios :
+dentro do container | fora do container 
+/data               | diretório onde vão ficar os arquivos de entrada e os resultados. 
+/external_catalogs  | diretório onde tem os catalogos 2MASS, u4b, UCAC5, gaia. neste exemplo um mesmo diretório tem os 4 catalogos. 
+/images             | diretório onde estão as imagens .fits

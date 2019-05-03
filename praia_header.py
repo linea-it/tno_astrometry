@@ -6,13 +6,11 @@ praia_header_params = 'praia_header.dat'
 praia_header_output = 'praia_header_output.txt'
 
 
-def create_input_file(exposures):
+def create_input_file(images):
     input_file = os.path.join(os.getenv("DATA_DIR"), praia_header_input)
     with open(input_file, 'w') as inp_file:
-        for exposure in exposures:
-            filepath = os.path.join(
-                os.getenv("DATA_DIR"), exposure['filename'])
-            inp_file.write(filepath + "\n")
+        for image in images:
+            inp_file.write(image + "\n")
         inp_file.close()
 
     return input_file
@@ -35,9 +33,27 @@ def create_params_file(input_file, output_file):
 
     return params_file
 
+def create_symlink_for_images(images):
 
-def run_praia_header(exposures):
-    input_file = create_input_file(exposures)
+    images_list = []
+    for image in images:
+        origin = image['filename']
+        filename = os.path.basename(origin)
+        dest = os.path.join(os.getenv("DATA_DIR"), filename)
+        os.symlink(origin, dest)
+
+        images_list.append(dest)
+
+    return images_list
+
+def remove_symlink_for_images(images):
+    for image in images:
+        os.unlink(image)
+
+
+def run_praia_header(images):
+
+    input_file = create_input_file(images)
 
     output_file = os.path.join(os.getenv("DATA_DIR"), praia_header_output)
 
