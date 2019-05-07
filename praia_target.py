@@ -4,7 +4,6 @@ import spiceypy as spice
 import numpy as np
 
 praia_target_params = 'praia_target.dat'
-
 targets_file = 'targets.txt'
 targets_offset_file = 'target_offset.txt'
 
@@ -75,5 +74,63 @@ def create_targets_file(name, dates, bsp_object, bsp_planets, leap_Sec):
             outFile.write(" " + ra + " " + dec + " " + dates[i] + " " + name + "\n")
 
     outFile.close()
+
+    return output
+
+
+
+def create_params_file(praia_astrometry_output, targets, targets_offset):
+
+    with open(os.path.join(os.getenv("APP_PATH"), "src/praia_target.template.dat")) as template:
+
+        data = template.read()
+        data = data.replace('{PRAIA_ASTROMETRY_OUTPUT}', praia_astrometry_output.ljust(50))
+        data = data.replace('{TARGET_FILE}', targets.ljust(50))
+        data = data.replace('{TARGET_OFFSET_FILE}', targets_offset.ljust(50))
+
+        params_file = os.path.join(os.getenv("DATA_DIR"), praia_target_params)
+        with open(params_file, 'w') as new_file:
+            new_file.write(data)
+        new_file.close()
+
+    template.close()
+
+    return params_file
+
+def run_praia_target(praia_astrometry_output, targets):
+
+    targets_offset = os.path.join(os.getenv("DATA_DIR"), targets_offset_file)
+
+    params_file = create_params_file(praia_astrometry_output, targets, targets_offset)
+
+    praia_target = os.getenv("PRAIA_TARGET")
+
+    exec_log = os.path.join(os.getenv("DATA_DIR"), "praia_target.log")
+
+    with open(exec_log, 'w') as fp:
+        process = subprocess.Popen(["%s < %s" % (praia_target, params_file)],
+                                   stdin=subprocess.PIPE, stdout=fp, shell=True)
+        process.communicate()
+
+    return targets_offset    
+
+def create_obs_file(targets_offset, asteroid, obs_code, cat_code):
+    mag, ra, dec, jd = np.loadtxt(targets_offset, usecols=(10,35,36, 43), ndmin=2, unpack=True)
+
+    raHMS = [ra2HMS(alpha) for alpha in ra]
+    decDMS = [dec2DMS(delta) for delta in dec]
+
+    output = os.path.join(os.getenv("DATA_DIR"), "%s.txt" % asteroid)
+
+    with open(output, 'w') as outFile:   
+        for i in range(len(mag)):
+            outFile.write(ra2HMS(ra[i], 4) + "  ")
+            outFile.write(dec2DMS(dec[i], 3) + "   ")
+            outFile.write('{:06.3f}'.format(mag[i]) + "  ")
+            outFile.write('{:016.8f}'.format(jd[i]) + "  ")
+            outFile.write(obs_code + "  ")
+            outFile.write(cat_code + "\n")     
+
+    outFile.close()    
 
     return output
