@@ -2,7 +2,7 @@
 import os
 import logging
 from praia_header import run_praia_header, create_symlink_for_images, remove_symlink_for_images
-from praia_astrometry import run_praia_astrometry, create_params_file
+from praia_astrometry import run_praia_astrometry, create_params_file, get_catalog_code
 from praia_target import create_targets_file, run_praia_target, create_obs_file
 import argparse
 from datetime import datetime
@@ -18,17 +18,13 @@ parser.add_argument(
     "--catalog", default="gaia1", help="Name of the catalog that will be used to identify the targets. example gaia1.")    
 parser.add_argument(
     "--obs_code", default="W84", help="IAU code of observation site or user-based site designation for target NIMA/MPC output formats only. default W84")
-parser.add_argument(
-    "--cat_code", default="V", help="User's reference catalogue code for target NIMA/MPC output formats only . default V")
-
 
 args = parser.parse_args()
 
 asteroid = args.asteroid
 obs_code = args.obs_code
-cat_code = args.cat_code
 catalog = args.catalog
-
+cat_code = get_catalog_code(catalog)
 
 # Setup Log file
 logfile = os.path.join(os.getenv("DATA_DIR"), "astrometry.log")
@@ -39,28 +35,28 @@ logging.info("Asteroid: [ %s ]" % asteroid)
 
 # TODO Recuperar todas as exposicoes para o Asteroid.
 ccd_images = [
-    # {'filename': '/images/D00232016_g_c36_r2356p02_immasked.fits'},
+    {'filename': '/images/D00232016_g_c36_r2356p02_immasked.fits'},
     {'filename': '/images/D00233221_g_c20_r2357p02_immasked.fits'},
-    # {'filename': '/images/D00240777_g_c11_r2362p01_immasked.fits'},
-    # {'filename': '/images/D00241125_g_c20_r2362p01_immasked.fits'},
-    # {'filename': '/images/D00246881_g_c41_r2363p01_immasked.fits'},
-    # {'filename': '/images/D00364725_r_c29_r2166p01_immasked.fits'},
-    # {'filename': '/images/D00364726_g_c56_r2166p01_immasked.fits'},
-    # {'filename': '/images/D00364727_i_c29_r2166p01_immasked.fits'},
-    # {'filename': '/images/D00372179_r_c06_r2182p02_immasked.fits'},
-    # {'filename': '/images/D00374550_z_c06_r2262p01_immasked.fits'},
-    # {'filename': '/images/D00382258_r_c10_r2277p01_immasked.fits'},
-    # {'filename': '/images/D00388143_i_c30_r2278p01_immasked.fits'},
-    # {'filename': '/images/D00398226_z_c30_r2284p01_immasked.fits'},
-    # {'filename': '/images/D00398231_z_c33_r2284p01_immasked.fits'},
-    # {'filename': '/images/D00503010_z_c30_r2378p01_immasked.fits'},
-    # {'filename': '/images/D00503041_i_c30_r2378p01_immasked.fits'},
-    # {'filename': '/images/D00506423_i_c35_r2379p01_immasked.fits'},
-    # {'filename': '/images/D00506424_z_c35_r2379p01_immasked.fits'},
-    # {'filename': '/images/D00506425_z_c35_r2379p01_immasked.fits'},
-    # {'filename': '/images/D00507393_i_c35_r2379p01_immasked.fits'},
-    # {'filename': '/images/D00507394_z_c35_r2379p01_immasked.fits'},
-    # {'filename': '/images/D00507395_z_c35_r2379p01_immasked.fits'}
+    {'filename': '/images/D00240777_g_c11_r2362p01_immasked.fits'},
+    {'filename': '/images/D00241125_g_c20_r2362p01_immasked.fits'},
+    {'filename': '/images/D00246881_g_c41_r2363p01_immasked.fits'},
+    {'filename': '/images/D00364725_r_c29_r2166p01_immasked.fits'},
+    {'filename': '/images/D00364726_g_c56_r2166p01_immasked.fits'},
+    {'filename': '/images/D00364727_i_c29_r2166p01_immasked.fits'},
+    {'filename': '/images/D00372179_r_c06_r2182p02_immasked.fits'},
+    {'filename': '/images/D00374550_z_c06_r2262p01_immasked.fits'},
+    {'filename': '/images/D00382258_r_c10_r2277p01_immasked.fits'},
+    {'filename': '/images/D00388143_i_c30_r2278p01_immasked.fits'},
+    {'filename': '/images/D00398226_z_c30_r2284p01_immasked.fits'},
+    {'filename': '/images/D00398231_z_c33_r2284p01_immasked.fits'},
+    {'filename': '/images/D00503010_z_c30_r2378p01_immasked.fits'},
+    {'filename': '/images/D00503041_i_c30_r2378p01_immasked.fits'},
+    {'filename': '/images/D00506423_i_c35_r2379p01_immasked.fits'},
+    {'filename': '/images/D00506424_z_c35_r2379p01_immasked.fits'},
+    {'filename': '/images/D00506425_z_c35_r2379p01_immasked.fits'},
+    {'filename': '/images/D00507393_i_c35_r2379p01_immasked.fits'},
+    {'filename': '/images/D00507394_z_c35_r2379p01_immasked.fits'},
+    {'filename': '/images/D00507395_z_c35_r2379p01_immasked.fits'}
 ]
 
 logging.info("CCD Images: [ %s ]" % len(ccd_images))
@@ -70,7 +66,7 @@ images = create_symlink_for_images(ccd_images)
 
 logging.info("Created Symbolic links for images")
 
-
+# Todo essa funcao pode ir para o praia_astrometry
 def execute_astrometry(idx, header, catalog):
     try:
         t0 =  datetime.now()
@@ -87,7 +83,7 @@ def execute_astrometry(idx, header, catalog):
         params_file = create_params_file(input_file, catalog, filename, idx)
 
         # Exucao do praia astrometry
-        praia_astrometry_output = run_praia_astrometry(input_file, catalog, params_file)
+        praia_astrometry_output = run_praia_astrometry(idx, input_file, catalog, params_file), 
 
         # remover os inputs e params.
         os.remove(input_file)
@@ -155,22 +151,18 @@ try:
     bsp_jpl = os.path.join(os.getenv("DATA_DIR"), bsp_jpl_filename)
     logging.info("BSP JPL: [%s]"  % bsp_jpl)
 
-    # TODO bsp_planets
     bsp_planets_filename = os.getenv("BSP_PLANETARY")
     bsp_planets = os.path.join(os.getenv("DATA_DIR"), bsp_planets_filename)
     if not os.path.exists(bsp_planets):
         # Se nao existir no data, criar link 
         os.symlink(os.path.join(os.getenv("BSP_PLANETARY_PATH"), bsp_planets_filename), bsp_planets)
-        
     logging.info("BSP PLANETARY: [%s]"  % bsp_planets)
 
-    # TODO leap second
     leap_sec_filename = os.getenv("LEAP_SENCOND")
     leap_sec = os.path.join(os.getenv("DATA_DIR"), leap_sec_filename)
     if not os.path.exists(leap_sec):
         # Se nao existir no data, criar link 
         os.symlink(os.path.join(os.getenv("LEAP_SENCOND_PATH"), leap_sec_filename), leap_sec)
-
     logging.info("LEAP SECONDS: [%s]"  % leap_sec)
 
     # Lista com datas em JD extraidas do resultado do Praia Headers
@@ -190,12 +182,9 @@ try:
     praia_target_output = create_obs_file(targets_offset, asteroid, obs_code, cat_code)
     logging.info("Target Astrometry generated: [%s]"  % praia_target_output)
 
-    # TODO concertar o codigo do catalogo no Eris.txt
-
     # Remover os links da imagens
     remove_symlink_for_images(images)
-    
-
+   
     t1 =  datetime.now()
     t_delta = t1 - t0
 

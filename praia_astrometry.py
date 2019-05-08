@@ -5,12 +5,15 @@ import numpy as np
 
 gaia_catalogs = ['gaia1', 'gaia2', 'gaia3', 'gaia4', 'gaia5', 'gaia6']
 
-# Gaia-DR1 = U
-# Gaia-DR2 = V    
-d_catalogs = dict({
-    'gaia1': 'U',
-    'gaia2': 'V'
-})
+def get_catalog_code(name):
+    # Gaia-DR1 = U
+    # Gaia-DR2 = V    
+    d_catalogs = dict({
+        'gaia1': 'U',
+        'gaia2': 'V'
+    })
+
+    return d_catalogs[name]
 
 def create_params_file(praia_header_output, user_catalog, output, idx):
 
@@ -31,7 +34,7 @@ def create_params_file(praia_header_output, user_catalog, output, idx):
         data = data.replace('{IDX}', str(idx).ljust(5))
 
         # Catalog Reference
-        data = data.replace('{CATALOG_REFERENCE}', d_catalogs[user_catalog])
+        data = data.replace('{CATALOG_REFERENCE}', get_catalog_code(user_catalog))
 
         with open(output, 'w') as new_file:
             new_file.write(data)
@@ -42,30 +45,16 @@ def create_params_file(praia_header_output, user_catalog, output, idx):
     return output
 
 
-def run_praia_astrometry(praia_header_output, catalog, params_file):
+def run_praia_astrometry(idx, praia_header_output, catalog, params_file):
 
     praia_astrometry = os.getenv("PRAIA_ASTROMETRY")
 
-    exec_log = os.path.join(os.getenv("DATA_DIR"), "praia_astrometry.log")
+    exec_log = os.path.join(os.getenv("DATA_DIR"), "praia_astrometry_%s.log" % idx)
 
     with open(exec_log, 'w') as fp:
         process = subprocess.Popen(["%s < %s" % (praia_astrometry, params_file)],
                                    stdin=subprocess.PIPE, stdout=fp, shell=True)
         process.communicate()
-
-    # # lista com arquivos de resultado, referente ao user_catalog 
-    # keyXYfiles = "%s/*.%s.rad.xy" % (os.getenv("DATA_DIR"), catalog)
-    # listXY = sorted(glob(keyXYfiles))
-
-    # # Remove arquivos de resultado que nao serao usados.
-    # for filename in os.listdir(os.getenv("DATA_DIR")):
-    #     filepath = os.path.join(os.getenv("DATA_DIR"), filename)
-    #     if (filename.endswith(".xy") or filename.endswith(".mes") or filename.endswith(".reg")) and filepath not in listXY:
-    #         os.remove(filepath)
-
-    # # guardar o path dos arquivos xy em um arquivo de output.
-    # output = os.path.join(os.getenv("DATA_DIR"), praia_astrometry_output)
-    # np.savetxt(output, listXY, fmt='%s')
 
     # Verificar se o arquivo xy foi gerado.
     ccd_image_path = np.loadtxt(praia_header_output, dtype=str, usecols=(19,), unpack=True)
@@ -83,3 +72,7 @@ def run_praia_astrometry(praia_header_output, catalog, params_file):
         return xy
     else:
         return None
+
+
+
+      

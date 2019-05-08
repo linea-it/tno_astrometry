@@ -46,7 +46,7 @@ docker run -it --rm -v $PWD/data:/data -v /archive/tno/ccd_images:/images -v $PW
 
 ```
 
-Exemplo de execução com imagem montada:
+Exemplo de execução com imagem build:
 ```
 docker run -it --rm -v $PWD/data:/data -v /archive/tno/ccd_images:/images -v /archive/external_catalogs:/catalogs:ro linea/tno_astrometry:latest python /app/run.py Eris
 ```
