@@ -8,7 +8,7 @@ ENV PRAIA_ASTROMETRY=PRAIA_astrometry_30_06
 ENV PRAIA_TARGET=PRAIA_targets_search_20_03
 
 
-RUN apk --no-cache --update-cache add gfortran postgresql-dev subversion musl-dev
+RUN apk --no-cache --update-cache add gfortran postgresql-dev
 #RUN mkdir ${APP_PATH} 
 RUN mkdir ${DATA_DIR}
 
