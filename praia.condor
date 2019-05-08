@@ -1,0 +1,14 @@
+Universe                = docker
+Docker_image            = linea/tno_astrometry:latest
+Should_transfer_files   = yes 
+when_to_transfer_output = on_exit
+Executable              = /app/run.py
+Arguments               = Eris
+
+Log                     = condor/praia-$(Process).log
+Output                  = condor/praia-$(Process).out
+Error                   = condor/praia-$(Process).err
+
+Requirements = Machine == "apl16.ib0.cm.linea.gov.br"
+
+Queue 1
