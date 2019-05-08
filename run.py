@@ -116,6 +116,8 @@ try:
     header_exec_time = header_t1 - header_t0
     logging.info("Praia Header Extraction executed in %s"  % humanize.naturaldelta(header_exec_time))
 
+
+    # Execucao do Praia Astrometry 
     astrometry_t0 = datetime.now()
     headers = open(praia_header_output, "r")
     count_headers = count = len(open(praia_header_output).readlines(  ))
@@ -147,7 +149,7 @@ try:
 
     # # TODO comparar a quantidade de exposures com os xy se for diferente e por que falhou em algum.
 
-    # # Execucao do Praia Astrometry
+    # # Execucao do Praia Astrometry 
     # astrometry_t0 = datetime.now()
     # praia_astrometry_output = run_praia_astrometry(praia_header_output, catalog)
     # astrometry_t1 =  datetime.now()

@@ -1,7 +1,7 @@
-/external_catalogs/2MASS/2MASS/                   | root directory under which the 2MASS catalogue sub-directories lay 
-/external_catalogs/UCAC4/u4b/                     | root directory under which the UCAC4 catalogue sub-directories lay 
-/external_catalogs/UCAC5/                         | root directory under which the UCAC5 catalogue directory lays
-/external_catalogs/gaia/GAS/                      | root directory under which the complete GAIA catalogue (GAIA_1) sub-directories lay
+/catalogs/2MASS/2MASS/                            | root directory under which the 2MASS catalogue sub-directories lay 
+/catalogs/UCAC4/u4b/                              | root directory under which the UCAC4 catalogue sub-directories lay 
+/catalogs/UCAC5/                                  | root directory under which the UCAC5 catalogue directory lays
+/catalogs/gaia/GAS/                               | root directory under which the complete GAIA catalogue (GAIA_1) sub-directories lay
 +10                                               | magnitude cutoffs: minimum magnitude defining GAIA_2 catalogue solution
 +30                                               | magnitude cutoffs: maximum magnitude defining GAIA_2 catalogue solution
 {USER_CATALOG}.cat| User reference catalogue (PRAIA format) 
