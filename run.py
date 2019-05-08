@@ -39,28 +39,28 @@ logging.info("Asteroid: [ %s ]" % asteroid)
 
 # TODO Recuperar todas as exposicoes para o Asteroid.
 ccd_images = [
-    {'filename': '/images/D00232016_g_c36_r2356p02_immasked.fits'},
+    # {'filename': '/images/D00232016_g_c36_r2356p02_immasked.fits'},
     {'filename': '/images/D00233221_g_c20_r2357p02_immasked.fits'},
-    {'filename': '/images/D00240777_g_c11_r2362p01_immasked.fits'},
-    {'filename': '/images/D00241125_g_c20_r2362p01_immasked.fits'},
-    {'filename': '/images/D00246881_g_c41_r2363p01_immasked.fits'},
-    {'filename': '/images/D00364725_r_c29_r2166p01_immasked.fits'},
-    {'filename': '/images/D00364726_g_c56_r2166p01_immasked.fits'},
-    {'filename': '/images/D00364727_i_c29_r2166p01_immasked.fits'},
-    {'filename': '/images/D00372179_r_c06_r2182p02_immasked.fits'},
-    {'filename': '/images/D00374550_z_c06_r2262p01_immasked.fits'},
-    {'filename': '/images/D00382258_r_c10_r2277p01_immasked.fits'},
-    {'filename': '/images/D00388143_i_c30_r2278p01_immasked.fits'},
-    {'filename': '/images/D00398226_z_c30_r2284p01_immasked.fits'},
-    {'filename': '/images/D00398231_z_c33_r2284p01_immasked.fits'},
-    {'filename': '/images/D00503010_z_c30_r2378p01_immasked.fits'},
-    {'filename': '/images/D00503041_i_c30_r2378p01_immasked.fits'},
-    {'filename': '/images/D00506423_i_c35_r2379p01_immasked.fits'},
-    {'filename': '/images/D00506424_z_c35_r2379p01_immasked.fits'},
-    {'filename': '/images/D00506425_z_c35_r2379p01_immasked.fits'},
-    {'filename': '/images/D00507393_i_c35_r2379p01_immasked.fits'},
-    {'filename': '/images/D00507394_z_c35_r2379p01_immasked.fits'},
-    {'filename': '/images/D00507395_z_c35_r2379p01_immasked.fits'}
+    # {'filename': '/images/D00240777_g_c11_r2362p01_immasked.fits'},
+    # {'filename': '/images/D00241125_g_c20_r2362p01_immasked.fits'},
+    # {'filename': '/images/D00246881_g_c41_r2363p01_immasked.fits'},
+    # {'filename': '/images/D00364725_r_c29_r2166p01_immasked.fits'},
+    # {'filename': '/images/D00364726_g_c56_r2166p01_immasked.fits'},
+    # {'filename': '/images/D00364727_i_c29_r2166p01_immasked.fits'},
+    # {'filename': '/images/D00372179_r_c06_r2182p02_immasked.fits'},
+    # {'filename': '/images/D00374550_z_c06_r2262p01_immasked.fits'},
+    # {'filename': '/images/D00382258_r_c10_r2277p01_immasked.fits'},
+    # {'filename': '/images/D00388143_i_c30_r2278p01_immasked.fits'},
+    # {'filename': '/images/D00398226_z_c30_r2284p01_immasked.fits'},
+    # {'filename': '/images/D00398231_z_c33_r2284p01_immasked.fits'},
+    # {'filename': '/images/D00503010_z_c30_r2378p01_immasked.fits'},
+    # {'filename': '/images/D00503041_i_c30_r2378p01_immasked.fits'},
+    # {'filename': '/images/D00506423_i_c35_r2379p01_immasked.fits'},
+    # {'filename': '/images/D00506424_z_c35_r2379p01_immasked.fits'},
+    # {'filename': '/images/D00506425_z_c35_r2379p01_immasked.fits'},
+    # {'filename': '/images/D00507393_i_c35_r2379p01_immasked.fits'},
+    # {'filename': '/images/D00507394_z_c35_r2379p01_immasked.fits'},
+    # {'filename': '/images/D00507395_z_c35_r2379p01_immasked.fits'}
 ]
 
 logging.info("CCD Images: [ %s ]" % len(ccd_images))
@@ -149,13 +149,6 @@ try:
 
     # # TODO comparar a quantidade de exposures com os xy se for diferente e por que falhou em algum.
 
-    # # Execucao do Praia Astrometry 
-    # astrometry_t0 = datetime.now()
-    # praia_astrometry_output = run_praia_astrometry(praia_header_output, catalog)
-    # astrometry_t1 =  datetime.now()
-    # astrometry_exec_time = astrometry_t1 - astrometry_t0
-    # logging.info("Praia Astrometry executed in %s"  % humanize.naturaldelta(astrometry_exec_time))
-
     # Execucao do Praia Targets
     # TODO bsp_jpl
     bsp_jpl_filename = "Eris.bsp"
@@ -163,13 +156,21 @@ try:
     logging.info("BSP JPL: [%s]"  % bsp_jpl)
 
     # TODO bsp_planets
-    bsp_planets_filename = "de435.bsp"
+    bsp_planets_filename = os.getenv("BSP_PLANETARY")
     bsp_planets = os.path.join(os.getenv("DATA_DIR"), bsp_planets_filename)
+    if not os.path.exists(bsp_planets):
+        # Se nao existir no data, criar link 
+        os.symlink(os.path.join(os.getenv("BSP_PLANETARY_PATH"), bsp_planets_filename), bsp_planets)
+        
     logging.info("BSP PLANETARY: [%s]"  % bsp_planets)
 
     # TODO leap second
-    leap_sec_filename = "naif0012.tls"
+    leap_sec_filename = os.getenv("LEAP_SENCOND")
     leap_sec = os.path.join(os.getenv("DATA_DIR"), leap_sec_filename)
+    if not os.path.exists(leap_sec):
+        # Se nao existir no data, criar link 
+        os.symlink(os.path.join(os.getenv("LEAP_SENCOND_PATH"), leap_sec_filename), leap_sec)
+
     logging.info("LEAP SECONDS: [%s]"  % leap_sec)
 
     # Lista com datas em JD extraidas do resultado do Praia Headers
@@ -189,10 +190,11 @@ try:
     praia_target_output = create_obs_file(targets_offset, asteroid, obs_code, cat_code)
     logging.info("Target Astrometry generated: [%s]"  % praia_target_output)
 
+    # TODO concertar o codigo do catalogo no Eris.txt
 
     # Remover os links da imagens
     remove_symlink_for_images(images)
-
+    
 
     t1 =  datetime.now()
     t_delta = t1 - t0
