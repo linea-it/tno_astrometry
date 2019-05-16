@@ -24,7 +24,7 @@ def create_params_file(praia_header_output, user_catalog, catalog_code, output, 
 
         # Verificar se o catalogo que sera usado e diferente dos catalogos defaults.
         if user_catalog not in file_catalogs:
-            catalog = user_catalog + ".cat"
+            catalog = os.path.join(os.getenv("DATA_DIR"), user_catalog + ".cat")
             catalog_xy = user_catalog + ".rad.xy"
             data = data.replace('{USER_CATALOG}', catalog.ljust(50))
             data = data.replace('{USER_CATALOG_XY}', catalog_xy.ljust(50))
