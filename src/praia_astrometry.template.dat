@@ -4,7 +4,7 @@
 /catalogs/gaia/GAS/                               | root directory under which the complete GAIA catalogue (GAIA_1) sub-directories lay
 +10                                               | magnitude cutoffs: minimum magnitude defining GAIA_2 catalogue solution
 +30                                               | magnitude cutoffs: maximum magnitude defining GAIA_2 catalogue solution
-{USER_CATALOG}.cat| User reference catalogue (PRAIA format) 
+{USER_CATALOG}| User reference catalogue (PRAIA format) 
 0                                                 | (0) Astrometry of fits images .:. Remake astrometry from PRAIA's previous: (1) measured (x,y)s ; (2) measured (RA,DEC)s (tangent plane technique)
 {PRAIA_HEADER_OUTPUT}| Astrometry option = 0 -> file with extracted header data from fits images .:. option = 1,2 -> List of PRAIA xy files for remaking astrometry
 targets                                           | targets input file: (RA,Dec), JD, target name
@@ -67,7 +67,7 @@ gaia4.rad.xy                                      | extension of "xy" output fil
 gaia5.rad.xy                                      | extension of "xy" output files  GAIA_5 reduction
 gaia6.rad.xy                                      | extension of "xy" output files  GAIA_6 reduction
 gaia7.rad.xy                                      | extension of "xy" output files  GAIA_7 reduction
-{USER_CATALOG}.rad.xy| extension of "xy" output files, User reference catalog reduction
+{USER_CATALOG_XY}| extension of "xy" output files, User reference catalog reduction
 1.0                                               | time instant tolerance for target identification (seconds) 
 2.0                                               | position error radius for target identification (arcsec) 
 0.263                                             | pixel scale (arcsec/pixel)

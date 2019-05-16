@@ -10,12 +10,15 @@ import humanize
 import traceback
 import numpy as np
 from concurrent.futures import ThreadPoolExecutor, wait, as_completed
+import subprocess
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
     "asteroid", help="Asteroid name without spaces. example: 1999RB216")
 parser.add_argument(
-    "--catalog", default="gaia1", help="Name of the catalog that will be used to identify the targets. example gaia1.")    
+    "--images", default="ccd_images.csv", help="Name of csv file with csv information. default ccd_images.csv" )    
+parser.add_argument(
+    "--catalog", default="gaia2", help="Name of the catalog that will be used to identify the targets. example gaia1 or gaia2." )
 parser.add_argument(
     "--obs_code", default="W84", help="IAU code of observation site or user-based site designation for target NIMA/MPC output formats only. default W84")
 
@@ -25,6 +28,8 @@ asteroid = args.asteroid
 obs_code = args.obs_code
 catalog = args.catalog
 cat_code = get_catalog_code(catalog)
+ccd_images_filename = args.images
+
 
 # Setup Log file
 logfile = os.path.join(os.getenv("DATA_DIR"), "astrometry.log")
@@ -32,33 +37,39 @@ logging.basicConfig(filename=logfile, level=logging.DEBUG)
 logging.info("Start Astrometry pipeline")
 logging.info("Asteroid: [ %s ]" % asteroid)
 
+# # TODO Recuperar todas as exposicoes para o Asteroid.
+# ccd_images = [
+#     # {'filename': '/images/D00232016_g_c36_r2356p02_immasked.fits'},
+#     # {'filename': '/images/D00233221_g_c20_r2357p02_immasked.fits'},
+#     {'filename': '/images/D00240777_g_c11_r2362p01_immasked.fits'},
+#     # {'filename': '/images/D00241125_g_c20_r2362p01_immasked.fits'},
+#     # {'filename': '/images/D00246881_g_c41_r2363p01_immasked.fits'},
+#     # {'filename': '/images/D00364725_r_c29_r2166p01_immasked.fits'},
+#     # {'filename': '/images/D00364726_g_c56_r2166p01_immasked.fits'},
+#     # {'filename': '/images/D00364727_i_c29_r2166p01_immasked.fits'},
+#     # {'filename': '/images/D00372179_r_c06_r2182p02_immasked.fits'},
+#     # {'filename': '/images/D00374550_z_c06_r2262p01_immasked.fits'},
+#     # {'filename': '/images/D00382258_r_c10_r2277p01_immasked.fits'},
+#     # {'filename': '/images/D00388143_i_c30_r2278p01_immasked.fits'},
+#     # {'filename': '/images/D00398226_z_c30_r2284p01_immasked.fits'},
+#     # {'filename': '/images/D00398231_z_c33_r2284p01_immasked.fits'},
+#     # {'filename': '/images/D00503010_z_c30_r2378p01_immasked.fits'},
+#     # {'filename': '/images/D00503041_i_c30_r2378p01_immasked.fits'},
+#     # {'filename': '/images/D00506423_i_c35_r2379p01_immasked.fits'},
+#     # {'filename': '/images/D00506424_z_c35_r2379p01_immasked.fits'},
+#     # {'filename': '/images/D00506425_z_c35_r2379p01_immasked.fits'},
+#     # {'filename': '/images/D00507393_i_c35_r2379p01_immasked.fits'},
+#     # {'filename': '/images/D00507394_z_c35_r2379p01_immasked.fits'},
+#     # {'filename': '/images/D00507395_z_c35_r2379p01_immasked.fits'}
+# ]
 
-# TODO Recuperar todas as exposicoes para o Asteroid.
-ccd_images = [
-    {'filename': '/images/D00232016_g_c36_r2356p02_immasked.fits'},
-    {'filename': '/images/D00233221_g_c20_r2357p02_immasked.fits'},
-    {'filename': '/images/D00240777_g_c11_r2362p01_immasked.fits'},
-    {'filename': '/images/D00241125_g_c20_r2362p01_immasked.fits'},
-    {'filename': '/images/D00246881_g_c41_r2363p01_immasked.fits'},
-    {'filename': '/images/D00364725_r_c29_r2166p01_immasked.fits'},
-    {'filename': '/images/D00364726_g_c56_r2166p01_immasked.fits'},
-    {'filename': '/images/D00364727_i_c29_r2166p01_immasked.fits'},
-    {'filename': '/images/D00372179_r_c06_r2182p02_immasked.fits'},
-    {'filename': '/images/D00374550_z_c06_r2262p01_immasked.fits'},
-    {'filename': '/images/D00382258_r_c10_r2277p01_immasked.fits'},
-    {'filename': '/images/D00388143_i_c30_r2278p01_immasked.fits'},
-    {'filename': '/images/D00398226_z_c30_r2284p01_immasked.fits'},
-    {'filename': '/images/D00398231_z_c33_r2284p01_immasked.fits'},
-    {'filename': '/images/D00503010_z_c30_r2378p01_immasked.fits'},
-    {'filename': '/images/D00503041_i_c30_r2378p01_immasked.fits'},
-    {'filename': '/images/D00506423_i_c35_r2379p01_immasked.fits'},
-    {'filename': '/images/D00506424_z_c35_r2379p01_immasked.fits'},
-    {'filename': '/images/D00506425_z_c35_r2379p01_immasked.fits'},
-    {'filename': '/images/D00507393_i_c35_r2379p01_immasked.fits'},
-    {'filename': '/images/D00507394_z_c35_r2379p01_immasked.fits'},
-    {'filename': '/images/D00507395_z_c35_r2379p01_immasked.fits'}
-]
-
+# Imagens
+ccd_images_csv = os.path.join(os.getenv("DATA_DIR"), str(ccd_images_filename))
+if not os.path.exists(ccd_images_csv):
+    msg = "csv file with ccds information not found. Filename: [%s]" % ccd_images_csv
+    logging.error(msg)
+    raise msg
+ccd_images = np.genfromtxt(ccd_images_csv, dtype=None, delimiter=';', names=True, encoding='utf8')
 logging.info("CCD Images: [ %s ]" % len(ccd_images))
 
 # Criar link para imagens no mesmo diretorio dos dados. 
@@ -67,7 +78,7 @@ images = create_symlink_for_images(ccd_images)
 logging.info("Created Symbolic links for images")
 
 # Todo essa funcao pode ir para o praia_astrometry
-def execute_astrometry(idx, header, catalog):
+def execute_astrometry(idx, header, catalog, catalog_code):
     try:
         t0 =  datetime.now()
         # Criar arquivo de input para cada execucao em paralelo.
@@ -80,14 +91,14 @@ def execute_astrometry(idx, header, catalog):
 
         # Criar arquivo de parametros para cada execucao.
         filename = os.path.join(os.getenv("DATA_DIR"), "astrometry_params_%s.dat" % idx)
-        params_file = create_params_file(input_file, catalog, filename, idx)
+        params_file = create_params_file(input_file, catalog, catalog_code, filename, idx)
 
         # Exucao do praia astrometry
         praia_astrometry_output = run_praia_astrometry(idx, input_file, catalog, params_file), 
 
         # remover os inputs e params.
-        os.remove(input_file)
-        os.remove(params_file)
+        # os.remove(input_file)
+        # os.remove(params_file)
 
         t1 = datetime.now()
         tdelta = t1 - t0
@@ -105,6 +116,38 @@ try:
 
     t0 = datetime.now()
 
+    catalog_name = None
+
+    # Catalog
+    if catalog == 'gaia2':
+        # Procurar um arquivo csv no diretorio de data para converter para o formato do PRAIA.
+        catalog_filename = 'gaia_dr2.csv'
+        input_catalog = os.path.join(os.getenv("DATA_DIR"), catalog_filename)
+        gaia_dr2_catalog = os.path.join(os.getenv("DATA_DIR"), "%s.cat" % os.path.splitext(catalog_filename)[0])
+
+        if not os.path.exists(input_catalog):
+            msg = "Catalog file not found. to use gaia2 must have in /data a csv file with the name gaia_dr2.csv."
+            logging.error(msg)
+            raise msg
+
+        logging.debug("Converting User Catalog GAIA DR2 to PRAIA format. Filename: [%s]"  % input_catalog)
+
+        with open(gaia_dr2_catalog, 'w') as fp:
+            process = subprocess.Popen(["%s %s" % (os.getenv("CDS2REF"), input_catalog)],
+                                   stdin=subprocess.PIPE, stdout=fp, shell=True)
+        process.communicate()
+
+        if not os.path.exists(gaia_dr2_catalog):
+            msg = "Catalog file was not generated. Filename: [%s]" % gaia_dr2_catalog
+            logging.error(msg)
+            raise msg
+
+        logging.debug("Catalog was converted to PRAIA format. Filename: [%s]"  % gaia_dr2_catalog)
+
+        catalog_name = os.path.splitext(catalog_filename)[0]
+    else:
+        catalog_name = catalog
+
     # Execucao do Praia Header Extraction
     header_t0 =  datetime.now()
     praia_header_output = run_praia_header(images)
@@ -120,10 +163,10 @@ try:
 
     pool = ThreadPoolExecutor()
     futures = []
-    i = 0
+    i = 1
     for header in headers:
         logging.info("Running Praia Astrometry %s of %s" % (i, count_headers))
-        futures.append(pool.submit(execute_astrometry, i, header, catalog))
+        futures.append(pool.submit(execute_astrometry, i, header, catalog_name, cat_code))
         i += 1
     
     # Esperar todas as execucoes.
@@ -143,14 +186,18 @@ try:
     astrometry_exec_time = astrometry_t1 - astrometry_t0
     logging.info("Praia Astrometry executed in %s"  % humanize.naturaldelta(astrometry_exec_time))
 
-    # # TODO comparar a quantidade de exposures com os xy se for diferente e por que falhou em algum.
-
     # Execucao do Praia Targets
-    # TODO bsp_jpl
-    bsp_jpl_filename = "Eris.bsp"
+
+    # BSP JPL
+    bsp_jpl_filename = "%s.bsp" % asteroid
     bsp_jpl = os.path.join(os.getenv("DATA_DIR"), bsp_jpl_filename)
+    if not os.path.exists(bsp_jpl):
+        msg = "BSP JPL file not found. Filename: [%s]" % bsp_jpl
+        logging.error(msg)
+        raise msg
     logging.info("BSP JPL: [%s]"  % bsp_jpl)
 
+    # BSP Planetary
     bsp_planets_filename = os.getenv("BSP_PLANETARY")
     bsp_planets = os.path.join(os.getenv("DATA_DIR"), bsp_planets_filename)
     if not os.path.exists(bsp_planets):
@@ -158,6 +205,7 @@ try:
         os.symlink(os.path.join(os.getenv("BSP_PLANETARY_PATH"), bsp_planets_filename), bsp_planets)
     logging.info("BSP PLANETARY: [%s]"  % bsp_planets)
 
+    # Leap Seconds
     leap_sec_filename = os.getenv("LEAP_SENCOND")
     leap_sec = os.path.join(os.getenv("DATA_DIR"), leap_sec_filename)
     if not os.path.exists(leap_sec):
@@ -173,7 +221,6 @@ try:
     targets_file = create_targets_file(asteroid, dates_jd, bsp_jpl, bsp_planets, leap_sec)
     logging.info("Targets file was generated: [%s]"  % targets_file)
 
-
     # Criar o arquivo Targets Offset
     targets_offset = run_praia_target(praia_astrometry_output, targets_file)
     logging.info("Targets Offset file was generated: [%s]"  % targets_offset)
@@ -185,6 +232,12 @@ try:
     # Remover os links da imagens
     remove_symlink_for_images(images)
    
+    # Remover o link BSP Planetary
+    os.unlink(bsp_planets)
+
+    # Remover o link do Leap Second
+    os.unlink(leap_sec)
+
     t1 =  datetime.now()
     t_delta = t1 - t0
 

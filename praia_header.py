@@ -37,7 +37,7 @@ def create_symlink_for_images(images):
 
     images_list = []
     for image in images:
-        origin = image['filename']
+        origin = os.path.join(os.getenv("IMAGES_PATH"), image['filename'])
         filename = os.path.basename(origin)
         dest = os.path.join(os.getenv("DATA_DIR"), filename)
         os.symlink(origin, dest)
