@@ -22,6 +22,7 @@ ENV LEAP_SENCOND_URL=https://naif.jpl.nasa.gov/pub/naif/generic_kernels/lsk/${LE
 
 
 RUN apt-get update && apt-get install -y  \
+    vim \
     gfortran \
     gzip \
     curl \

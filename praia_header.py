@@ -10,6 +10,7 @@ def create_input_file(images):
     input_file = os.path.join(os.getenv("DATA_DIR"), praia_header_input)
     with open(input_file, 'w') as inp_file:
         for image in images:
+
             inp_file.write(image + "\n")
         inp_file.close()
 
@@ -38,11 +39,14 @@ def create_symlink_for_images(images):
     images_list = []
     for image in images:
         origin = os.path.join(os.getenv("IMAGES_PATH"), image['filename'])
-        filename = os.path.basename(origin)
-        dest = os.path.join(os.getenv("DATA_DIR"), filename)
-        os.symlink(origin, dest)
 
-        images_list.append(dest)
+        if os.path.exists(origin):
+            filename = os.path.basename(origin)
+            dest = os.path.join(os.getenv("DATA_DIR"), filename)
+            os.symlink(origin, dest)
+
+            images_list.append(dest)
+        # TODO Baixar a imagem quando nao existir no diretorio
 
     return images_list
 
@@ -63,10 +67,19 @@ def run_praia_header(images):
 
     exec_log = os.path.join(os.getenv("DATA_DIR"), "praia_header.log")
 
-    with open(exec_log, 'w') as fp:
+    with open(exec_log, 'wb') as fp:
+
+        # process = subprocess.Popen(["%s < %s" % (praia_header, params_file)],
+        #                         stdin=subprocess.PIPE, stdout=fp, stderr=fp, shell=True)
         process = subprocess.Popen(["%s < %s" % (praia_header, params_file)],
-                                   stdin=subprocess.PIPE, stdout=fp, shell=True)
-        process.communicate()
+                                stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)        
+        out, error = process.communicate()
+
+        fp.write(out)
+        fp.write(error)
+
+        if process.returncode > 0:
+            raise Exception("Failed to run PRAIA Header Extraction. \n" + error.decode("utf-8"))
 
     if os.path.exists(output_file):
         return output_file

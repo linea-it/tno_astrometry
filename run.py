@@ -16,6 +16,8 @@ parser = argparse.ArgumentParser()
 parser.add_argument(
     "asteroid", help="Asteroid name without spaces. example: 1999RB216")
 parser.add_argument(
+    "--path", default=None, help="Path where the inputs are and where the outputs are. if not passed the directory mounted as /data will be used." )    
+parser.add_argument(
     "--images", default="ccd_images.csv", help="Name of csv file with csv information. default ccd_images.csv" )    
 parser.add_argument(
     "--catalog", default="gaia2", help="Name of the catalog that will be used to identify the targets. example gaia1 or gaia2." )
@@ -25,11 +27,16 @@ parser.add_argument(
 args = parser.parse_args()
 
 asteroid = args.asteroid
+basepath = args.path
 obs_code = args.obs_code
 catalog = args.catalog
 cat_code = get_catalog_code(catalog)
 ccd_images_filename = args.images
 
+if basepath is not None and basepath is not '':
+    complete_path = os.path.join(os.getenv("DATA_DIR"), basepath.strip('/'))
+    os.symlink(complete_path, "/data_tmp")
+    os.environ["DATA_DIR"] = "/data_tmp"
 
 # Setup Log file
 logfile = os.path.join(os.getenv("DATA_DIR"), "astrometry.log")
@@ -75,7 +82,7 @@ logging.info("CCD Images: [ %s ]" % len(ccd_images))
 # Criar link para imagens no mesmo diretorio dos dados. 
 images = create_symlink_for_images(ccd_images)
 
-logging.info("Created Symbolic links for images")
+logging.info("Created Symbolic links for images. Links [ %s ]" % len(images))
 
 # Todo essa funcao pode ir para o praia_astrometry
 def execute_astrometry(idx, header, catalog, catalog_code):
@@ -150,7 +157,12 @@ try:
 
     # Execucao do Praia Header Extraction
     header_t0 =  datetime.now()
-    praia_header_output = run_praia_header(images)
+    try:
+        praia_header_output = run_praia_header(images)
+    except Exception as e:
+        logging.error(e)
+        raise(e)
+        
     header_t1 =  datetime.now()
     header_exec_time = header_t1 - header_t0
     logging.info("Praia Header Extraction executed in %s"  % humanize.naturaldelta(header_exec_time))
