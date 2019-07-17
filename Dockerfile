@@ -36,11 +36,16 @@ RUN mkdir $APP_PATH \
 WORKDIR $APP_PATH
 
 RUN pip install --upgrade pip && pip install \
-    psycopg2-binary \
-    SQLAlchemy \
-    humanize \
-    numpy \
-    spiceypy
+    certifi==2019.6.16 \
+    cycler==0.10.0 \
+    humanize==0.5.1 \
+    kiwisolver==1.1.0 \
+    matplotlib==3.1.1 \
+    numpy==1.16.4 \
+    pyparsing==2.4.0 \
+    python-dateutil==2.8.0 \
+    six==1.12.0 \
+    spiceypy==2.2.0
 
 COPY src/ $APP_PATH/src
 

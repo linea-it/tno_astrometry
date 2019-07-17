@@ -2,6 +2,9 @@ import subprocess
 import os
 from glob import glob
 import numpy as np
+from datetime import datetime
+import traceback
+import humanize
 
 file_catalogs = ['gaia1',]
 
@@ -47,6 +50,38 @@ def create_params_file(praia_header_output, user_catalog, catalog_code, output, 
     template.close()
 
     return output
+
+
+# Todo essa funcao pode ir para o praia_astrometry
+def execute_astrometry(idx, header, catalog, catalog_code, logging):
+    try:
+        t0 =  datetime.now()
+        # Criar arquivo de input para cada execucao em paralelo.
+        input_file = os.path.join(os.getenv("DATA_DIR"), "astrometry_input_%s.txt" % idx)
+        logging.debug("Astrometry input IDX[%s] file [ %s ]" %(str(idx).ljust(2), input_file))
+
+        with open(input_file, 'w') as text_file:
+            text_file.write(header)
+        text_file.close()
+
+        # Criar arquivo de parametros para cada execucao.
+        filename = os.path.join(os.getenv("DATA_DIR"), "astrometry_params_%s.dat" % idx)
+        params_file = create_params_file(input_file, catalog, catalog_code, filename, idx)
+
+        # Exucao do praia astrometry
+        praia_astrometry_output = run_praia_astrometry(idx, input_file, catalog, params_file), 
+
+        t1 = datetime.now()
+        tdelta = t1 - t0
+
+        logging.info("Astrometry IDX[%s] Output [ %s ] executed in %s" %(str(idx).ljust(2), praia_astrometry_output, humanize.naturaldelta(tdelta)))
+        
+        return praia_astrometry_output
+    except Exception as e:
+        logging.error(e)
+        logging.error(traceback.format_exc())
+        return None
+
 
 
 def run_praia_astrometry(idx, praia_header_output, catalog,  params_file):

@@ -2,8 +2,8 @@ import subprocess
 import os
 
 praia_header_input = 'images_paths.txt'
-praia_header_params = 'praia_header.dat'
-praia_header_output = 'praia_header_output.txt'
+praia_header_params = 'hd.dat'
+praia_header_output = 'hd_out.txt'
 
 
 def create_input_file(images):
@@ -35,13 +35,26 @@ def create_params_file(input_file, output_file):
     return params_file
 
 def create_symlink_for_images(images):
+    """ 
+        Cria Link simbolico para as imagens. 
+        para os programas PRAIA funcioanrem e necessario que as imagens estejam 
+        no mesmo diretorio onde o programa esta executando, para evitar uma 
+        copia, sao criados os links simbolicos. 
+        
+        Antes de criar o link verifica se a imagem existe. 
 
+        origem: /images/...../filename.fits -> /DATA_DIR/filename.fits
+
+        retorna uma lista com os links criados. 
+        obs: se uma imagem nao existir ela nao e retornada. 
+    """
     images_list = []
     for image in images:
         origin = os.path.join(os.getenv("IMAGES_PATH"), image['filename'])
 
         if os.path.exists(origin):
             filename = os.path.basename(origin)
+            filename = "%s.fits" % str(image['id'])
             dest = os.path.join(os.getenv("DATA_DIR"), filename)
             os.symlink(origin, dest)
 

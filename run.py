@@ -2,7 +2,7 @@
 import os
 import logging
 from praia_header import run_praia_header, create_symlink_for_images, remove_symlink_for_images
-from praia_astrometry import run_praia_astrometry, create_params_file, get_catalog_code
+from praia_astrometry import run_praia_astrometry, get_catalog_code, execute_astrometry
 from praia_target import create_targets_file, run_praia_target, create_obs_file
 import argparse
 from datetime import datetime
@@ -34,9 +34,16 @@ cat_code = get_catalog_code(catalog)
 ccd_images_filename = args.images
 
 if basepath is not None and basepath is not '':
+    # Quando o container recebe o parametro path, o valor da variavel DATA_DIR deve ser alterado. 
+    # tem uma limitacao nos programas PRAIA em que os paths nao podem ultrapassar 50 caracteres. 
+    # para contornar isso e criado um link do diretorio de inputs para o diretorio APP_PATH/asteroid_name
+    # por exemplo 
+    # path = /proccess/4/objects/Eris -> /app/Eris
     complete_path = os.path.join(os.getenv("DATA_DIR"), basepath.strip('/'))
-    os.symlink(complete_path, "/data_tmp")
-    os.environ["DATA_DIR"] = "/data_tmp"
+    tmp_dir = os.path.join(os.getenv("APP_PATH"), asteroid.replace(' ', '_'))
+    os.symlink(complete_path, tmp_dir)
+    os.environ["DATA_DIR"] = tmp_dir
+
 
 # Setup Log file
 logfile = os.path.join(os.getenv("DATA_DIR"), "astrometry.log")
@@ -44,38 +51,12 @@ logging.basicConfig(filename=logfile, level=logging.DEBUG)
 logging.info("Start Astrometry pipeline")
 logging.info("Asteroid: [ %s ]" % asteroid)
 
-# # TODO Recuperar todas as exposicoes para o Asteroid.
-# ccd_images = [
-#     # {'filename': '/images/D00232016_g_c36_r2356p02_immasked.fits'},
-#     # {'filename': '/images/D00233221_g_c20_r2357p02_immasked.fits'},
-#     {'filename': '/images/D00240777_g_c11_r2362p01_immasked.fits'},
-#     # {'filename': '/images/D00241125_g_c20_r2362p01_immasked.fits'},
-#     # {'filename': '/images/D00246881_g_c41_r2363p01_immasked.fits'},
-#     # {'filename': '/images/D00364725_r_c29_r2166p01_immasked.fits'},
-#     # {'filename': '/images/D00364726_g_c56_r2166p01_immasked.fits'},
-#     # {'filename': '/images/D00364727_i_c29_r2166p01_immasked.fits'},
-#     # {'filename': '/images/D00372179_r_c06_r2182p02_immasked.fits'},
-#     # {'filename': '/images/D00374550_z_c06_r2262p01_immasked.fits'},
-#     # {'filename': '/images/D00382258_r_c10_r2277p01_immasked.fits'},
-#     # {'filename': '/images/D00388143_i_c30_r2278p01_immasked.fits'},
-#     # {'filename': '/images/D00398226_z_c30_r2284p01_immasked.fits'},
-#     # {'filename': '/images/D00398231_z_c33_r2284p01_immasked.fits'},
-#     # {'filename': '/images/D00503010_z_c30_r2378p01_immasked.fits'},
-#     # {'filename': '/images/D00503041_i_c30_r2378p01_immasked.fits'},
-#     # {'filename': '/images/D00506423_i_c35_r2379p01_immasked.fits'},
-#     # {'filename': '/images/D00506424_z_c35_r2379p01_immasked.fits'},
-#     # {'filename': '/images/D00506425_z_c35_r2379p01_immasked.fits'},
-#     # {'filename': '/images/D00507393_i_c35_r2379p01_immasked.fits'},
-#     # {'filename': '/images/D00507394_z_c35_r2379p01_immasked.fits'},
-#     # {'filename': '/images/D00507395_z_c35_r2379p01_immasked.fits'}
-# ]
-
 # Imagens
 ccd_images_csv = os.path.join(os.getenv("DATA_DIR"), str(ccd_images_filename))
 if not os.path.exists(ccd_images_csv):
     msg = "csv file with ccds information not found. Filename: [%s]" % ccd_images_csv
     logging.error(msg)
-    raise msg
+    raise Exception(msg)
 ccd_images = np.genfromtxt(ccd_images_csv, dtype=None, delimiter=';', names=True, encoding='utf8')
 logging.info("CCD Images: [ %s ]" % len(ccd_images))
 
@@ -83,41 +64,6 @@ logging.info("CCD Images: [ %s ]" % len(ccd_images))
 images = create_symlink_for_images(ccd_images)
 
 logging.info("Created Symbolic links for images. Links [ %s ]" % len(images))
-
-# Todo essa funcao pode ir para o praia_astrometry
-def execute_astrometry(idx, header, catalog, catalog_code):
-    try:
-        t0 =  datetime.now()
-        # Criar arquivo de input para cada execucao em paralelo.
-        input_file = os.path.join(os.getenv("DATA_DIR"), "astrometry_input_%s.txt" % idx)
-        logging.debug("Astrometry input IDX[%s] file [ %s ]" %(str(idx).ljust(2), input_file))
-
-        with open(input_file, 'w') as text_file:
-            text_file.write(header)
-        text_file.close()
-
-        # Criar arquivo de parametros para cada execucao.
-        filename = os.path.join(os.getenv("DATA_DIR"), "astrometry_params_%s.dat" % idx)
-        params_file = create_params_file(input_file, catalog, catalog_code, filename, idx)
-
-        # Exucao do praia astrometry
-        praia_astrometry_output = run_praia_astrometry(idx, input_file, catalog, params_file), 
-
-        # remover os inputs e params.
-        # os.remove(input_file)
-        # os.remove(params_file)
-
-        t1 = datetime.now()
-        tdelta = t1 - t0
-
-        logging.info("Astrometry IDX[%s] Output [ %s ] executed in %s" %(str(idx).ljust(2), praia_astrometry_output, humanize.naturaldelta(tdelta)))
-        
-        return praia_astrometry_output
-    except Exception as e:
-        logging.error(e)
-        logging.error(traceback.format_exc())
-        return None
-
 
 try:
 
@@ -135,7 +81,7 @@ try:
         if not os.path.exists(input_catalog):
             msg = "Catalog file not found. to use gaia2 must have in /data a csv file with the name gaia_dr2.csv."
             logging.error(msg)
-            raise msg
+            raise Exception(msg)
 
         logging.debug("Converting User Catalog GAIA DR2 to PRAIA format. Filename: [%s]"  % input_catalog)
 
@@ -147,7 +93,7 @@ try:
         if not os.path.exists(gaia_dr2_catalog):
             msg = "Catalog file was not generated. Filename: [%s]" % gaia_dr2_catalog
             logging.error(msg)
-            raise msg
+            raise Exception(msg)
 
         logging.debug("Catalog was converted to PRAIA format. Filename: [%s]"  % gaia_dr2_catalog)
 
@@ -161,7 +107,7 @@ try:
         praia_header_output = run_praia_header(images)
     except Exception as e:
         logging.error(e)
-        raise(e)
+        raise Exception(e)
         
     header_t1 =  datetime.now()
     header_exec_time = header_t1 - header_t0
@@ -178,14 +124,14 @@ try:
     i = 1
     for header in headers:
         logging.info("Running Praia Astrometry %s of %s" % (i, count_headers))
-        futures.append(pool.submit(execute_astrometry, i, header, catalog_name, cat_code))
+        futures.append(pool.submit(execute_astrometry, i, header, catalog_name, cat_code, logging))
         i += 1
     
     # Esperar todas as execucoes.
     wait(futures)
 
     # guardar o path dos arquivos xy em um arquivo de output.
-    praia_astrometry_output = os.path.join(os.getenv("DATA_DIR"), "praia_astrometry_output.txt")
+    praia_astrometry_output = os.path.join(os.getenv("DATA_DIR"), "ast_out.txt")
     listXY = []
     for future in futures:
         xy = future.result()
@@ -206,7 +152,7 @@ try:
     if not os.path.exists(bsp_jpl):
         msg = "BSP JPL file not found. Filename: [%s]" % bsp_jpl
         logging.error(msg)
-        raise msg
+        raise Exception(msg)
     logging.info("BSP JPL: [%s]"  % bsp_jpl)
 
     # BSP Planetary
@@ -250,6 +196,10 @@ try:
     # Remover o link do Leap Second
     os.unlink(leap_sec)
 
+    # Remover o link para o diretorio data_dir 
+    if os.path.islink(os.getenv("DATA_DIR")):
+        os.unlink(os.getenv("DATA_DIR"))
+
     t1 =  datetime.now()
     t_delta = t1 - t0
 
@@ -257,8 +207,13 @@ try:
     logging.info("Finish in %s"  % humanize.naturaldelta(t_delta))
 
 
+
 except Exception as e:
     logging.error("Error: [ %s ]"  % e)
     logging.error(traceback.format_exc())
     remove_symlink_for_images(images)
-    raise(e)
+
+    # Remover o link para o diretorio data_dir 
+    if os.path.islink(os.getenv("DATA_DIR")):
+        os.unlink(os.getenv("DATA_DIR"))
+    raise Exception(e)
