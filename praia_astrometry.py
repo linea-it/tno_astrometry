@@ -32,7 +32,6 @@ def create_params_file(praia_header_output, user_catalog, catalog_code, output, 
             data = data.replace('{USER_CATALOG}', catalog.ljust(50))
             data = data.replace('{USER_CATALOG_XY}', catalog_xy.ljust(50))
 
-
         else:
             # se o catalogo passado for um catalogo default o user catalog nao sera usado.
             data = data.replace('{USER_CATALOG}', "user_catalog_palceholder.cat".ljust(50))
@@ -42,6 +41,9 @@ def create_params_file(praia_header_output, user_catalog, catalog_code, output, 
 
         # Catalog Reference
         data = data.replace('{CATALOG_REFERENCE}', catalog_code)
+
+        # Data Path 
+        data = data.replace('{DATA_DIR}', os.getenv("DATA_DIR"))
 
         with open(output, 'w') as new_file:
             new_file.write(data)

@@ -31,7 +31,8 @@ RUN apt-get update && apt-get install -y  \
 
 RUN mkdir $APP_PATH \ 
     && mkdir $BSP_PLANETARY_PATH \
-    && mkdir $LEAP_SENCOND_PATH
+    && mkdir $LEAP_SENCOND_PATH \
+    && chmod 777 $APP_PATH
 
 WORKDIR $APP_PATH
 
