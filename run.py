@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 import os
+import sys
 import logging
 from praia_header import run_praia_header, create_symlink_for_images, remove_symlink_for_images
 from praia_astrometry import run_praia_astrometry, get_catalog_code, execute_astrometry
 from praia_target import create_targets_file, run_praia_target, create_obs_file
+from ccd_image import read_ccd_image_csv, get_image_by_id
 import argparse
 from datetime import datetime
 import humanize
@@ -11,6 +13,9 @@ import traceback
 import numpy as np
 from concurrent.futures import ThreadPoolExecutor, wait, as_completed
 import subprocess
+from tempfile import NamedTemporaryFile
+import fnmatch
+import json
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
@@ -33,6 +38,8 @@ catalog = args.catalog
 cat_code = get_catalog_code(catalog)
 ccd_images_filename = args.images
 
+
+original_data_path = os.getenv("DATA_DIR")
 if basepath is not None and basepath is not '':
     # Quando o container recebe o parametro path, o valor da variavel DATA_DIR deve ser alterado. 
     # tem uma limitacao nos programas PRAIA em que os paths nao podem ultrapassar 50 caracteres. 
@@ -40,6 +47,10 @@ if basepath is not None and basepath is not '':
     # por exemplo 
     # path = /proccess/4/objects/Eris -> /app/Eris
     complete_path = os.path.join(os.getenv("DATA_DIR"), basepath.strip('/'))
+
+    # Guarda uma copia do path completo para usar no final do programa.
+    original_data_path = complete_path
+
     tmp_dir = os.path.join(os.getenv("APP_PATH"), asteroid.replace(' ', '_'))
     os.symlink(complete_path, tmp_dir)
     os.environ["DATA_DIR"] = tmp_dir
@@ -57,7 +68,8 @@ if not os.path.exists(ccd_images_csv):
     msg = "csv file with ccds information not found. Filename: [%s]" % ccd_images_csv
     logging.error(msg)
     raise Exception(msg)
-ccd_images = np.genfromtxt(ccd_images_csv, dtype=None, delimiter=';', names=True, encoding='utf8')
+
+ccd_images = read_ccd_image_csv(ccd_images_csv)
 logging.info("CCD Images: [ %s ]" % len(ccd_images))
 
 # Criar link para imagens no mesmo diretorio dos dados. 
@@ -124,7 +136,7 @@ try:
     i = 1
     for header in headers:
         logging.info("Running Praia Astrometry %s of %s" % (i, count_headers))
-        futures.append(pool.submit(execute_astrometry, i, header, catalog_name, cat_code, logging))
+        futures.append(pool.submit(execute_astrometry, i, header, catalog_name, cat_code, ccd_images, logging))
         i += 1
     
     # Esperar todas as execucoes.
@@ -200,13 +212,91 @@ try:
     if os.path.islink(os.getenv("DATA_DIR")):
         os.unlink(os.getenv("DATA_DIR"))
 
+    # voltar para o Path original
+    os.environ["DATA_DIR"] = original_data_path
+
+
+    ###########################################################################
+    # Organizar os resultados e salvar no json.
+    ###########################################################################
+    targets_file = os.path.join(os.getenv("DATA_DIR"), os.path.basename(targets_file))
+    targets_offset = os.path.join(os.getenv("DATA_DIR"), os.path.basename(targets_offset))
+    praia_target_output = os.path.join(os.getenv("DATA_DIR"), os.path.basename(praia_target_output))
+
+    result = dict({
+        'asteroid': asteroid,
+        'images': len(ccd_images),
+        'processed_images': len(images),
+        'astrometry': dict({
+            'filename': os.path.basename(praia_target_output),
+            'filepath': praia_target_output,
+            'file_size': os.path.getsize(praia_target_output),
+            'extension': os.path.splitext(praia_target_output)[1]
+        }),
+        'target_offset': dict({
+            'filename': os.path.basename(targets_offset),
+            'filepath': targets_offset,
+            'file_size': os.path.getsize(targets_offset),
+            'extension': os.path.splitext(targets_offset)[1]
+        }),
+        'targets_file': dict({
+            'filename': os.path.basename(targets_file),
+            'filepath': targets_file,
+            'file_size': os.path.getsize(targets_file),
+            'extension': os.path.splitext(targets_file)[1]
+        }),
+        'outputs': dict({}),
+    })
+
+    # Entrar no diretorio original para fazer os acertos nos nomes.
+    for image in ccd_images:
+        listOfFiles = os.listdir(os.getenv("DATA_DIR"))
+        pattern = "%s*" % image['id']
+        image_name = image['filename'].split('.')[0]
+
+        # TODO: Corrigir o path das imagens nos arquivos de saida. e renomear os arquivos
+        # substituindo o id da imagem pelo nome
+
+        outputs = list()
+        for old_filename in listOfFiles:
+            if fnmatch.fnmatch(old_filename, pattern):
+                new_filename = old_filename.replace(str(image['id']), image_name)
+
+                new_path = os.path.join(os.getenv("DATA_DIR"), new_filename)
+                os.rename(
+                    os.path.join(
+                        os.getenv("DATA_DIR"), old_filename), 
+                        new_path
+                    ) 
+        
+                extension = os.path.splitext(new_path)[1]
+                catalog = None
+
+                if extension == '.xy':
+                    catalog = new_filename.split('.')[1]
+
+                outputs.append(dict({
+                    'catalog': catalog,
+                    'filename': new_filename,
+                    'filepath': new_path,
+                    'file_size': os.path.getsize(new_path),
+                    'extension': extension
+                }))
+
+        result['outputs'][image_name] = outputs
+
+
+    with open('astrometry.json', 'w') as json_file:
+        json.dump(result, json_file)
+
     t1 =  datetime.now()
     t_delta = t1 - t0
 
     logging.info("Astrometry Output: [%s]"  % praia_target_output)
     logging.info("Finish in %s"  % humanize.naturaldelta(t_delta))
 
-
+    # Exibir o json de resultado na saida do programa
+    print(json.dumps(result, indent=2))
 
 except Exception as e:
     logging.error("Error: [ %s ]"  % e)

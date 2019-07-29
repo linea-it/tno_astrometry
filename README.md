@@ -42,13 +42,13 @@ OBS: Assuming you're connected to the LIneA's environment.
 Exemplo de comando de execução montando o diretorio de codigo:
 
 ```
-docker run -it --rm -v $PWD/data:/data -v /archive/tno/ccd_images:/images -v $PWD/:/app -v /archive/external_catalogs:/catalogs:ro linea/tno_astrometry:latest python /app/run.py Eris
+docker run -it --rm --user $(id -u):$(id -g) -v $PWD/:/app  -v /archive/des/tno/testing:/data -v /archive/des/tno/ccd_images:/images -v /archive/external_catalogs:/catalogs:ro linea/tno_astrometry:latest python /app/run.py Eris --path /proccess/4/objects/Eris  --catalog gaia2
 
 ```
 
 Exemplo de execução com imagem build:
 ```
-docker run -it --rm -v $PWD/data:/data -v /archive/tno/ccd_images:/images -v /archive/external_catalogs:/catalogs:ro linea/tno_astrometry:latest python /app/run.py Eris
+docker run -it --rm --user $(id -u):$(id -g) -v $PWD/data:/data -v /archive/tno/ccd_images:/images -v /archive/external_catalogs:/catalogs:ro linea/tno_astrometry:latest python /app/run.py Eris --path /proccess/4/objects/Eris  --catalog gaia2
 ```
 
 
@@ -61,7 +61,7 @@ dentro do container | fora do container
 
 Comando para apagar todos os resultados:
 ```
-rm -f *.xy rm *.reg *.mes astrometry_reduction_* *.dat *.log *.txt astrometry_photometry_* *.fits *.cat
+rm -f *.xy rm *.reg *.mes astrometry_reduction_* *.dat *.log *.txt astrometry_photometry_* *.fits *.cat *.json fort.*
 ```
 
 BAIXAR NOVAMENTE AS IMAGENS  (Tem um diretorio compressed que provavelmente tem o original)

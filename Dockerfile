@@ -55,6 +55,7 @@ COPY run.py $APP_PATH
 COPY praia_header.py $APP_PATH
 COPY praia_astrometry.py $APP_PATH
 COPY praia_target.py $APP_PATH
+COPY ccd_image.py $APP_PATH
 
 # Compile Praia Header Extraction
 RUN gfortran src/${PRAIA_HEADER}.f -o /bin/${PRAIA_HEADER}

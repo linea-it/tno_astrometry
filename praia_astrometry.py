@@ -54,8 +54,7 @@ def create_params_file(praia_header_output, user_catalog, catalog_code, output, 
     return output
 
 
-# Todo essa funcao pode ir para o praia_astrometry
-def execute_astrometry(idx, header, catalog, catalog_code, logging):
+def execute_astrometry(idx, header, catalog, catalog_code, ccd_images, logging):
     try:
         t0 =  datetime.now()
         # Criar arquivo de input para cada execucao em paralelo.
@@ -71,7 +70,7 @@ def execute_astrometry(idx, header, catalog, catalog_code, logging):
         params_file = create_params_file(input_file, catalog, catalog_code, filename, idx)
 
         # Exucao do praia astrometry
-        praia_astrometry_output = run_praia_astrometry(idx, input_file, catalog, params_file), 
+        praia_astrometry_output = run_praia_astrometry(idx, input_file, catalog, params_file)
 
         t1 = datetime.now()
         tdelta = t1 - t0
@@ -94,8 +93,15 @@ def run_praia_astrometry(idx, praia_header_output, catalog,  params_file):
 
     with open(exec_log, 'w') as fp:
         process = subprocess.Popen(["%s < %s" % (praia_astrometry, params_file)],
-                                   stdin=subprocess.PIPE, stdout=fp, shell=True)
-        process.communicate()
+                                   stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+
+        out, error = process.communicate()
+
+        fp.write(out.decode("utf-8"))
+        fp.write(error.decode("utf-8"))
+
+        if process.returncode > 0:
+            raise Exception("Failed to run PRAIA Astrometry. \n" + error.decode("utf-8"))
 
     # Verificar se o arquivo xy foi gerado.
     ccd_image_path = np.loadtxt(praia_header_output, dtype=str, usecols=(19,), unpack=True)
@@ -106,10 +112,10 @@ def run_praia_astrometry(idx, praia_header_output, catalog,  params_file):
     mes = os.path.join(os.getenv("DATA_DIR"), "%s.mes" % (ccd_image))
     
     # Remove .reg e .mes
-    os.remove(reg)
-    os.remove(mes)
+    # os.remove(reg)
+    # os.remove(mes)
 
-    if (os.path.exists(xy)):
+    if os.path.exists(xy):
         return xy
     else:
         return None

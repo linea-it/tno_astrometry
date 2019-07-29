@@ -109,8 +109,15 @@ def run_praia_target(praia_astrometry_output, targets):
 
     with open(exec_log, 'w') as fp:
         process = subprocess.Popen(["%s < %s" % (praia_target, params_file)],
-                                   stdin=subprocess.PIPE, stdout=fp, shell=True)
-        process.communicate()
+                                   stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+
+        out, error = process.communicate()
+
+        fp.write(out.decode("utf-8"))
+        fp.write(error.decode("utf-8"))
+
+        if process.returncode > 0:
+            raise Exception("Failed to run PRAIA Target. \n" + error.decode("utf-8"))
 
     return targets_offset    
 
