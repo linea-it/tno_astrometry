@@ -13,47 +13,47 @@ fdp.dat                                           | FDP (Field Distortion Patter
 4                                                 | n nearest points for FDP mask interpolation (FDP file type 1 only)
 1                                                 | output (x,y)s: (1) without FDP correction (keeps original xys in all astrometry modes); (2) with FDP correction (tangent plane xys in astrometry mode 2)
 bpx.dat                                           | Bad pixel mask  (xmin xmax ymin ymax)  common to all treated images (only applies for astrometry of fits images)
-{DATA_DIR}/astrometry_photometry_{IDX}                                 | photometric statistics of each field
-{DATA_DIR}/astrometry_reduction_UCAC4_{IDX}                            | reduction statistics of each field for UCAC4
-{DATA_DIR}/astrometry_reduction_UCAC5_{IDX}                            | reduction statistics of each field for UCAC5
-{DATA_DIR}/astrometry_reduction_GAIA1_{IDX}                            | reduction statistics of each field for GAIA_1 solution (all GAS stars, including TGAS stars)
-{DATA_DIR}/astrometry_reduction_GAIA2_{IDX}                            | reduction statistics of each field for GAIA_2 solution (all GAS stars, including TGAS stars, within magnitude range given by the user)
-{DATA_DIR}/astrometry_reduction_GAIA3_{IDX}                            | reduction statistics of each field for GAIA_3 solution (GAIA_1, including UCAC4 proper motions)
-{DATA_DIR}/astrometry_reduction_GAIA4_{IDX}                            | reduction statistics of each field for GAIA_4 solution (GAIA_1, including [GAIA1-UCAC4]-based proper motions)
-{DATA_DIR}/astrometry_reduction_GAIA5_{IDX}                            | reduction statistics of each field for GAIA_5 solution (GAIA_1, including UCAC4 proper motions, but only with stars with proper motions)
-{DATA_DIR}/astrometry_reduction_GAIA6_{IDX}                            | reduction statistics of each field for GAIA_6 solution (GAIA_1, including [GAIA1-UCAC4]-based proper motions, but only with stars with proper motions)
-{DATA_DIR}/astrometry_reduction_GAIA7_{IDX}                            | reduction statistics of each field for GAIA_7 solution (GAIA_5 or GAIA_6 stars only, but with GAS positions without UCAC4-based proper motions)
-{DATA_DIR}/astrometry_reduction_CUSER_{IDX}                            | reduction statistics of each field for User catalogue solution
-astrometry_target_PRAIA_UCAC4                     | target file PRAIA format for UCAC4 solution
-astrometry_target_PRAIA_UCAC5                     | target file PRAIA format for UCAC5 solution
-astrometry_target_PRAIA_GAIA1                     | target file PRAIA format for GAIA_1 solution
-astrometry_target_PRAIA_GAIA2                     | target file PRAIA format for GAIA_2 solution
-astrometry_target_PRAIA_GAIA3                     | target file PRAIA format for GAIA_3 solution
-astrometry_target_PRAIA_GAIA4                     | target file PRAIA format for GAIA_4 solution
+{AST_PHOTOMETRY}| photometric statistics of each field
+{DATA_DIR}/{CCD_ID}.ast_reduction.ucac4.txt                              | reduction statistics of each field for UCAC4
+{DATA_DIR}/{CCD_ID}.ast_reduction.ucac5.txt                            | reduction statistics of each field for UCAC5
+{DATA_DIR}/{CCD_ID}.ast_reduction.gaia1.txt                            | reduction statistics of each field for GAIA_1 solution (all GAS stars, including TGAS stars)
+{DATA_DIR}/{CCD_ID}.ast_reduction.gaia2.txt                            | reduction statistics of each field for GAIA_2 solution (all GAS stars, including TGAS stars, within magnitude range given by the user)
+{DATA_DIR}/{CCD_ID}.ast_reduction.gaia3.txt                            | reduction statistics of each field for GAIA_3 solution (GAIA_1, including UCAC4 proper motions)
+{DATA_DIR}/{CCD_ID}.ast_reduction.gaia4.txt                            | reduction statistics of each field for GAIA_4 solution (GAIA_1, including [gaia1-UCAC4]-based proper motions)
+{DATA_DIR}/{CCD_ID}.ast_reduction.gaia5.txt                            | reduction statistics of each field for GAIA_5 solution (GAIA_1, including UCAC4 proper motions, but only with stars with proper motions)
+{DATA_DIR}/{CCD_ID}.ast_reduction.gaia6.txt                            | reduction statistics of each field for GAIA_6 solution (GAIA_1, including [gaia1-UCAC4]-based proper motions, but only with stars with proper motions)
+{DATA_DIR}/{CCD_ID}.ast_reduction.gaia7.txt                            | reduction statistics of each field for GAIA_7 solution (GAIA_5 or GAIA_6 stars only, but with GAS positions without UCAC4-based proper motions)
+{DATA_DIR}/{CCD_ID}.ast_reduction.{CUSER}.txt                              | reduction statistics of each field for User catalogue solution
+astrometry_target_PRAIA.ucac4                     | target file PRAIA format for UCAC4 solution
+astrometry_target_PRAIA.ucac5                     | target file PRAIA format for UCAC5 solution
+astrometry_target_PRAIA_gaia1                     | target file PRAIA format for GAIA_1 solution
+astrometry_target_PRAIA_gaia2                     | target file PRAIA format for GAIA_2 solution
+astrometry_target_PRAIA_gaia3                     | target file PRAIA format for GAIA_3 solution
+astrometry_target_PRAIA_gaia4                     | target file PRAIA format for GAIA_4 solution
 astrometry_target_PRAIA_GAIA5                     | target file PRAIA format for GAIA_5 solution 
 astrometry_target_PRAIA_GAIA6                     | target file PRAIA format for GAIA_6 solution
-astrometry_target_PRAIA_GAIA7                     | target file PRAIA format for GAIA_7 solution
-astrometry_target_PRAIA_CUSER                     | target file PRAIA format for User reference catalogue solution
-astrometry_target_MPC_UCAC4                       | target file MPC format for UCAC4 solution
-astrometry_target_MPC_UCAC5                       | target file MPC format for UCAC5 solution
-astrometry_target_MPC_GAIA1                       | target file MPC format for GAIA_1 solution
-astrometry_target_MPC_GAIA2                       | target file MPC format for GAIA_2 solution
-astrometry_target_MPC_GAIA3                       | target file MPC format for GAIA_3 solution
-astrometry_target_MPC_GAIA4                       | target file MPC format for GAIA_4 solution
+astrometry_target_PRAIA_gaia7                     | target file PRAIA format for GAIA_7 solution
+astrometry_target_PRAIA_{CUSER}                         | target file PRAIA format for User reference catalogue solution
+astrometry_target_MPC.ucac4                       | target file MPC format for UCAC4 solution
+astrometry_target_MPC.ucac5                       | target file MPC format for UCAC5 solution
+astrometry_target_MPC_gaia1                       | target file MPC format for GAIA_1 solution
+astrometry_target_MPC_gaia2                       | target file MPC format for GAIA_2 solution
+astrometry_target_MPC_gaia3                       | target file MPC format for GAIA_3 solution
+astrometry_target_MPC_gaia4                       | target file MPC format for GAIA_4 solution
 astrometry_target_MPC_GAIA5                       | target file MPC format for GAIA_5 solution
 astrometry_target_MPC_GAIA6                       | target file MPC format for GAIA_6 solution
-astrometry_target_MPC_GAIA7                       | target file MPC format for GAIA_7 solution
-astrometry_target_MPC_CUSER                       | target file MPC format for User reference catalogue solution
-astrometry_target_NIMA_UCAC4                      | target file NIMA format for UCAC4 solution
-astrometry_target_NIMA_UCAC5                      | target file NIMA format for UCAC5 solution
-astrometry_target_NIMA_GAIA1                      | target file NIMA format for GAIA_1 solution
-astrometry_target_NIMA_GAIA2                      | target file NIMA format for GAIA_2 solution
-astrometry_target_NIMA_GAIA3                      | target file NIMA format for GAIA_3 solution
-astrometry_target_NIMA_GAIA4                      | target file NIMA format for GAIA_4 solution
+astrometry_target_MPC_gaia7                       | target file MPC format for GAIA_7 solution
+astrometry_target_MPC_{CUSER}                           | target file MPC format for User reference catalogue solution
+astrometry_target_NIMA.ucac4                      | target file NIMA format for UCAC4 solution
+astrometry_target_NIMA.ucac5                      | target file NIMA format for UCAC5 solution
+astrometry_target_NIMA_gaia1                      | target file NIMA format for GAIA_1 solution
+astrometry_target_NIMA_gaia2                      | target file NIMA format for GAIA_2 solution
+astrometry_target_NIMA_gaia3                      | target file NIMA format for GAIA_3 solution
+astrometry_target_NIMA_gaia4                      | target file NIMA format for GAIA_4 solution
 astrometry_target_NIMA_GAIA5                      | target file NIMA format for GAIA_5 solution
 astrometry_target_NIMA_GAIA6                      | target file NIMA format for GAIA_6 solution
-astrometry_target_NIMA_GAIA7                      | target file NIMA format for GAIA_7 solution
-astrometry_target_NIMA_CUSER                      | target file NIMA format for User reference catalogue solution
+astrometry_target_NIMA_gaia7                      | target file NIMA format for GAIA_7 solution
+astrometry_target_NIMA_{CUSER}                          | target file NIMA format for User reference catalogue solution
 C|------------------------------------------------| object type for target MPC output format only
 R|------------------------------------------------| magnitude bandpass for target MPC output format only
 W84|----------------------------------------------| IAU code of observation site or user-based site designation for target NIMA/MPC output formats only

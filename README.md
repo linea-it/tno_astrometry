@@ -61,7 +61,7 @@ dentro do container | fora do container
 
 Comando para apagar todos os resultados:
 ```
-rm -f *.xy rm *.reg *.mes astrometry_reduction_* *.dat *.log *.txt astrometry_photometry_* *.fits *.cat *.json fort.*
+rm -f *.xy rm *.reg *.mes astrometry_reduction_* *.dat *.log *.txt astrometry_photometry_* *.fits *.cat *.json fort.* *.png
 ```
 
 BAIXAR NOVAMENTE AS IMAGENS  (Tem um diretorio compressed que provavelmente tem o original)

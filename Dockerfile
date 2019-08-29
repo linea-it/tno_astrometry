@@ -46,7 +46,8 @@ RUN pip install --upgrade pip && pip install \
     pyparsing==2.4.0 \
     python-dateutil==2.8.0 \
     six==1.12.0 \
-    spiceypy==2.2.0
+    spiceypy==2.2.0 \
+    pandas==0.25.1 
 
 COPY src/ $APP_PATH/src
 
@@ -56,6 +57,7 @@ COPY praia_header.py $APP_PATH
 COPY praia_astrometry.py $APP_PATH
 COPY praia_target.py $APP_PATH
 COPY ccd_image.py $APP_PATH
+COPY plot_astrometry.py $APP_PATH
 
 # Compile Praia Header Extraction
 RUN gfortran src/${PRAIA_HEADER}.f -o /bin/${PRAIA_HEADER}
