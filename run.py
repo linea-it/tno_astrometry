@@ -294,7 +294,6 @@ try:
         # Ler arquivo Targets Offset 
         df_targets = read_targets_offset(os.path.join(os.getenv("DATA_DIR"), result['target_offset']['filename']))
 
-
         for idx in result['outputs']:
             ccd_result = result['outputs'][idx]
 
@@ -308,47 +307,18 @@ try:
 
             targets = df_targets.loc[df_targets['ccd_image'].str.contains(str(ccd['id'])) == True]
 
-            plot = plotStarsCCD(asteroid, ccd, stars, targets, os.path.join(os.getenv("DATA_DIR"), '%s.ast_plot.png' % ccd['id']))
+            plot_filepath = os.path.join(os.getenv("DATA_DIR"), '%s.ast_plot.png' % ccd['id'])
+            plot = plotStarsCCD(asteroid, ccd, stars, targets, plot_filepath)
+
+            logging.info("Plot [%s] created for ccd %s in %s." % (i, ccd['id'], humanize.naturaldelta(tdelta)))
 
             t1 = datetime.now()
             tdelta = t1 - t0
-            logging.info("Plot created for ccd %s in %s. Plot [%s]" % (ccd['id'], humanize.naturaldelta(tdelta), plot))
+
+            i += 1
 
         plot_t1 = datetime.now()
         plot_tdelta = plot_t1 - plot_t0
-
-
-    # i = 1
-    # for header in headers:
-    #     logging.info("Running Praia Astrometry %s of %s" % (i, count_headers))
-    #     futures.append(pool.submit(execute_astrometry, i, header, catalog_name, cat_code, logging))
-    #     i += 1
-    
-    # # Esperar todas as execucoes.
-    # wait(futures)
-
-    # # guardar o path dos arquivos xy em um arquivo de output.
-    # praia_astrometry_output = os.path.join(os.getenv("DATA_DIR"), "ast_out.txt")
-    # listXY = []
-    # for future in futures:
-    #     xy, output = future.result()
-
-    #     logging.info("Output")
-    #     logging.info(output)
-
-    #     if output is not None:
-    #         listXY.append(xy)
-    #         result['outputs'][output['ccd_id']] = output
-
-
-
-
-
-
-
-
-
-
 
 
     # # Remover os links da imagens
