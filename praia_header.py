@@ -34,39 +34,6 @@ def create_params_file(input_file, output_file):
 
     return params_file
 
-def create_symlink_for_images(images):
-    """ 
-        Cria Link simbolico para as imagens. 
-        para os programas PRAIA funcioanrem e necessario que as imagens estejam 
-        no mesmo diretorio onde o programa esta executando, para evitar uma 
-        copia, sao criados os links simbolicos. 
-        
-        Antes de criar o link verifica se a imagem existe. 
-
-        origem: /images/...../filename.fits -> /DATA_DIR/filename.fits
-
-        retorna uma lista com os links criados. 
-        obs: se uma imagem nao existir ela nao e retornada. 
-    """
-    images_list = []
-    for image in images:
-        origin = os.path.join(os.getenv("IMAGES_PATH"), image['filename'])
-
-        if os.path.exists(origin):
-            filename = os.path.basename(origin)
-            filename = "%s.fits" % str(image['id'])
-            dest = os.path.join(os.getenv("DATA_DIR"), filename)
-            os.symlink(origin, dest)
-
-            images_list.append(dest)
-        # TODO Baixar a imagem quando nao existir no diretorio
-
-    return images_list
-
-def remove_symlink_for_images(images):
-    for image in images:
-        os.unlink(image)
-
 
 def run_praia_header(images):
 
@@ -85,14 +52,15 @@ def run_praia_header(images):
         # process = subprocess.Popen(["%s < %s" % (praia_header, params_file)],
         #                         stdin=subprocess.PIPE, stdout=fp, stderr=fp, shell=True)
         process = subprocess.Popen(["%s < %s" % (praia_header, params_file)],
-                                stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)        
+                                   stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
         out, error = process.communicate()
 
         fp.write(out)
         fp.write(error)
 
         if process.returncode > 0:
-            raise Exception("Failed to run PRAIA Header Extraction. \n" + error.decode("utf-8"))
+            raise Exception(
+                "Failed to run PRAIA Header Extraction. \n" + error.decode("utf-8"))
 
     if os.path.exists(output_file):
         return output_file

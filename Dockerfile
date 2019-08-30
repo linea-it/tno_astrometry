@@ -56,7 +56,7 @@ COPY run.py $APP_PATH
 COPY praia_header.py $APP_PATH
 COPY praia_astrometry.py $APP_PATH
 COPY praia_target.py $APP_PATH
-COPY ccd_image.py $APP_PATH
+COPY common.py $APP_PATH
 COPY plot_astrometry.py $APP_PATH
 
 # Compile Praia Header Extraction

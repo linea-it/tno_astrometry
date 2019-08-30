@@ -30,3 +30,12 @@
 *.exe
 *.out
 *.app
+
+venv
+
+.vscode
+
+ccd_images/
+data/
+external_catalogs/
+__pycache__
