@@ -15,7 +15,6 @@ from tempfile import NamedTemporaryFile
 import humanize
 import numpy as np
 import pandas as pd
-
 from common import (create_symlink_for_images, get_image_by_id,
                     get_stars_by_ccd, get_targets_by_ccd_id,
                     read_ccd_image_csv, read_stars_catalog,
@@ -379,6 +378,7 @@ try:
         df_targets = read_targets_offset(os.path.join(
             os.getenv("DATA_DIR"), result['target_offset']['filename']))
 
+        i = 0
         for idx in result['outputs']:
             ccd_result = result['outputs'][idx]
 
@@ -398,11 +398,19 @@ try:
                 os.getenv("DATA_DIR"), '%s.ast_plot.png' % ccd['id'])
             plot = plotStarsCCD(asteroid, ccd, stars, targets, plot_filepath)
 
-            logging.info("Plot [%s] created for ccd %s in %s." % (
-                i, ccd['id'], humanize.naturaldelta(tdelta)))
+            # Guardar o plot nos outputs do ccd
+            result['outputs'][idx]['files'].append({
+                'catalog': None,
+                'filename': os.path.basename(plot),
+                'file_size': os.path.getsize(plot),
+                'extension': os.path.splitext(plot)[1]
+            })
 
             t1 = datetime.now()
             tdelta = t1 - t0
+
+            logging.info("Plot [%s] created for ccd %s in %s." % (
+                i, ccd['id'], humanize.naturaldelta(tdelta)))
 
             i += 1
 
