@@ -232,7 +232,7 @@ try:
         'config': 'hd.dat',
         'filename': os.path.basename(praia_header_output),
         'file_size': os.path.getsize(praia_header_output),
-        'extension': os.path.splitext(praia_header_output)[1]
+        'extension': os.path.splitext(praia_header_output)[1],
         'headers': count_headers,
         'log': 'praia_header.log'
     })
