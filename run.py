@@ -230,7 +230,9 @@ try:
         'finish': header_t1.isoformat(),
         'execution_time': header_exec_time.total_seconds(),
         'config': 'hd.dat',
-        'output': os.path.basename(praia_header_output),
+        'filename': os.path.basename(praia_header_output),
+        'file_size': os.path.getsize(praia_header_output),
+        'extension': os.path.splitext(praia_header_output)[1]
         'headers': count_headers,
         'log': 'praia_header.log'
     })
@@ -336,7 +338,7 @@ try:
                 'filename': os.path.basename(praia_target_output),
                 'file_size': os.path.getsize(praia_target_output),
                 'extension': os.path.splitext(praia_target_output)[1]
-            }),
+            })
         else:
             msg = "Astrometric observed ICRF positions was not generated or is empty."
             result['error'] = msg
@@ -353,6 +355,7 @@ try:
         'start': targets_t0.isoformat(),
         'finish': targets_t1.isoformat(),
         'execution_time': targets_exec_time.total_seconds(),
+        'log': 'praia_target.log'
     })
 
     logging.info("Praia Targets executed in %s" %
