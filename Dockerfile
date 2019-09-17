@@ -19,15 +19,12 @@ ENV LEAP_SENCOND_PATH=$APP_PATH/leap_sencond
 ENV LEAP_SENCOND=naif0012.tls
 ENV LEAP_SENCOND_URL=https://naif.jpl.nasa.gov/pub/naif/generic_kernels/lsk/${LEAP_SENCOND}
 
-
-
 RUN apt-get update && apt-get install -y  \
     vim \
     gfortran \
     gzip \
     curl \
     && rm -rf /var/lib/apt/lists/*
-
 
 RUN mkdir $APP_PATH \ 
     && mkdir $BSP_PLANETARY_PATH \
@@ -47,7 +44,8 @@ RUN pip install --upgrade pip && pip install \
     python-dateutil==2.8.0 \
     six==1.12.0 \
     spiceypy==2.2.0 \
-    pandas==0.25.1 
+    pandas==0.25.1 \
+    astropy==2.0.8
 
 COPY src/ $APP_PATH/src
 
@@ -58,6 +56,7 @@ COPY praia_astrometry.py $APP_PATH
 COPY praia_target.py $APP_PATH
 COPY common.py $APP_PATH
 COPY plot_astrometry.py $APP_PATH
+COPY iers_table.py $APP_PATH
 
 # Compile Praia Header Extraction
 RUN gfortran src/${PRAIA_HEADER}.f -o /bin/${PRAIA_HEADER}
@@ -77,3 +76,6 @@ RUN curl ${BSP_PLANETARY_URL} --output ${BSP_PLANETARY_PATH}/${BSP_PLANETARY}
 
 # Download Leap Second
 RUN curl ${LEAP_SENCOND_URL} --output ${LEAP_SENCOND_PATH}/${LEAP_SENCOND}
+
+# Download Finals for astropy 
+RUN ./iers_table.py

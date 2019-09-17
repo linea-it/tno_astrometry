@@ -135,3 +135,16 @@ def read_targets_offset(filepath):
     df['ra'] = df['ra'].apply(lambda x: x*15)
 
     return df
+
+
+def location_by_obs_code(obs_code):
+    locations = dict({
+        'W84': dict({
+            'name': 'Cerro Tololo',
+            'lon': +289.193583333,
+            'lat': -30.16958333,
+            'ele': 2202.7
+        })
+    })
+
+    return locations[obs_code]

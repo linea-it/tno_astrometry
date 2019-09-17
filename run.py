@@ -18,7 +18,8 @@ import pandas as pd
 from common import (create_symlink_for_images, get_image_by_id,
                     get_stars_by_ccd, get_targets_by_ccd_id,
                     read_ccd_image_csv, read_stars_catalog,
-                    read_targets_offset, remove_symlink_for_images)
+                    read_targets_offset, remove_symlink_for_images, location_by_obs_code)
+
 from plot_astrometry import plotStarsCCD
 from praia_astrometry import (execute_astrometry, get_catalog_code,
                               run_praia_astrometry)
@@ -54,6 +55,8 @@ ccd_images_filename = args.images
 enable_plot = not args.disable_plot
 max_workers = args.max_workers
 debug = args.debug
+
+obs_location = location_by_obs_code(obs_code)
 
 t0 = datetime.now()
 
@@ -301,8 +304,9 @@ try:
     logging.info("DATES JD: [%s]" % len(dates_jd))
 
     # Criar o arquivo de Targets
+    location = [obs_location['lon'], obs_location['lat'], obs_location['ele']]
     targets_file = create_targets_file(
-        asteroid, dates_jd, bsp_jpl, bsp_planets, leap_sec)
+        asteroid, dates_jd, bsp_jpl, bsp_planets, leap_sec, location)
 
     logging.info("Targets file was generated: [%s]" % targets_file)
     result['targets_file'] = dict({
@@ -313,7 +317,7 @@ try:
 
     # Criar o arquivo Targets Offset
     targets_offset = run_praia_target(praia_astrometry_output, targets_file)
-    # Verificar ser o arquivo targets tem resultado.
+    # Verificar se o arquivo targets tem resultado.
     if os.path.isfile(targets_offset) and os.path.getsize(targets_offset) > 0:
         logging.info(
             "Targets Offset file was generated: [%s]" % targets_offset)
