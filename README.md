@@ -12,7 +12,7 @@ This repository contains the `Dockerfile` used to build a docker image for the P
 ### How to build the image
 
 ```sh
- git clone git@github.com:LIneA-Science/praia_astrometry.git
+ git clone https://github.com/linea-it/tno_astrometry.git
  cd praia_astrometry
  docker build -t praia .
 ```
