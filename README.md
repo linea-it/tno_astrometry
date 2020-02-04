@@ -13,8 +13,8 @@ This repository contains the `Dockerfile` used to build a docker image for the P
 
 ```sh
  git clone https://github.com/linea-it/tno_astrometry.git
- cd praia_astrometry
- docker build -t praia .
+ cd tno_astrometry
+ docker build -t praia_astrometry .
 ```
 
 ### How to commit and push
