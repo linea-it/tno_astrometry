@@ -9,16 +9,62 @@ src: https://www.researchgate.net/publication/258559018_PRAIA_-_Platform_for_Red
 
 This repository contains the `Dockerfile` used to build a docker image for the PRAIA_astrometry application.
 
-### How to build the image
+## How to use
+Está aplicação foi desenvolvida para executar um Objeto por vez, com pelo menos uma imagem ou varias. 
+executando em sequencia os seguintes programas
+1. PRAIA Header extraction
+2. PRAIA Astrometry (executa em paralelo com threads que podem ser limitadas atraves do argumento --max_workers)
+3. PRAIA Targets
+4. Plot Astrometry
 
+No final da execução retorna um json com todos os resultados gerados e estatisticas da execução, incluindo mensagens de erro e tempo de execução para cada etapa.
+
+para execução em paralelo, basta instanciar varias imagens cada uma com um volume /data contendo os inputs de um unico Objeto. 
+
+### Inputs
+ **TODO**  Detalhar cada input e seu formato.
+- Lista das imagens (csv)
+- BSP do Objeto
+- Catalogo de Referência 
+
+
+TODO criar exemplo executando com os inputs de exemplo Comando Simplificado.
+```
+docker run -it --rm --user $(id -u):$(id -g) -v $PWD/data/Eris:/data -v ${PWD}/data/ccd_images:/images praia_astrometry python /app/run.py Eris  --catalog gaia2
+```
+
+
+é Necessário montar os seguintes diretórios :
+
+| Dentro do Container | Fora do Container                                              |
+| ------------------- | -------------------------------------------------------------- |
+| /data               | diretório com os arquivos de entrada e onde ficaram os outputs |
+| /external_catalogs  | diretório onde tem os catalogos 2MASS, u4b, UCAC5, gaia1.      |
+| /images             | diretório onde estão as imagens .fits                          |
+
+OBS: Esta versão do PRAIA requer os catalogos em formato arquivo. 
+
+Para executar no ambiente do LInea os paths são: 
+
+| Dentro do Container | Fora do Container                         |
+| ------------------- | ----------------------------------------- |
+| /data               | pode ser qualquer diretório com os inputs |
+| /external_catalogs  | /archive/tno/data/external_catalogs       |
+| /images             | /archive/tno/ccd_images                   |
+
+
+
+
+
+
+## For developers
+### How to local build this image
 ```sh
  git clone https://github.com/linea-it/tno_astrometry.git
  cd tno_astrometry
  docker build -t praia_astrometry .
 ```
-
-### How to commit and push
-
+<!-- ### How to commit and push
 Create a container before this.
 
  ```sh
@@ -26,23 +72,16 @@ Create a container before this.
  docker commit <container_id> linea/praia:v20_09>     # e.g: v20_09
  docker tag <image_id> linea/praia:v20_09             # the id of the image created before
  docker push linea/praia:v20_09  
- ```
+ ``` -->
 
-How to run PRAIA
-
- ```sh
- docker run -it --name teste -v $PWD:/data -v /archive:/archive linea/praia:v30_06
- docker exec teste sh -c '/app/PRAIA_astrometry_30_06 < /data/PRAIA_astrometry_30_06_10.dat'
- ```
-
-OBS: Assuming you're connected to the LIneA's environment.
-
-
+### How to run PRAIA
 
 Exemplo de comando de execução montando o diretorio de codigo:
 
+Assuming you're connected to the LIneA's environment.
+
 ```
-docker run -it --rm --user $(id -u):$(id -g) -v $PWD/:/app  -v /archive/des/tno/testing:/data -v /archive/des/tno/ccd_images:/images -v /archive/external_catalogs:/catalogs:ro linea/tno_astrometry:latest python /app/run.py Eris --path /proccess/4/objects/Eris  --catalog gaia2
+docker run -it --rm --user $(id -u):$(id -g) -v $PWD/:/app  -v /archive/des/tno/testing:/data -v /archive/des/tno/ccd_images:/images -v /archive/external_catalogs:/catalogs:ro praia_astrometry python /app/run.py Eris --path /proccess/4/objects/Eris  --catalog gaia2
 
 ```
 
@@ -51,19 +90,8 @@ Exemplo de execução com imagem build:
 docker run -it --rm --user $(id -u):$(id -g) -v $PWD/data:/data -v /archive/tno/ccd_images:/images -v /archive/external_catalogs:/catalogs:ro linea/tno_astrometry:latest python /app/run.py Eris --path /proccess/4/objects/Eris  --catalog gaia2
 ```
 
-
-é Necessário montar os diretórios :
-dentro do container | fora do container 
-/data               | diretório onde vão ficar os arquivos de entrada e os resultados. 
-/external_catalogs  | diretório onde tem os catalogos 2MASS, u4b, UCAC5, gaia. neste exemplo um mesmo diretório tem os 4 catalogos. 
-/images             | diretório onde estão as imagens .fits
-
-
 Comando para apagar todos os resultados:
 ```
 rm -f *.xy rm *.reg *.mes astrometry_reduction_* *.dat *.log *.txt astrometry_photometry_* *.fits *.cat *.json fort.* *.png
 ```
 
-BAIXAR NOVAMENTE AS IMAGENS  (Tem um diretorio compressed que provavelmente tem o original)
-D00512549_z_c51_r2379p01_immasked.fits
-D00232016_g_c36_r2356p02_immasked.fit
