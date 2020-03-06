@@ -150,8 +150,12 @@ def run_praia_astrometry(idx, ccd_id, praia_header_output, catalog,  params_file
 
     files = []
 
-    xy = os.path.join(os.getenv("DATA_DIR"), "%s.%s.rad.xy" %
-                      (ccd_image, catalog))
+    reference_catalog_xy = os.path.join(os.getenv("DATA_DIR"), "%s.%s.rad.xy" %
+                                        (ccd_image, catalog))
+    xy = dict({
+        'ccd_id': ccd_image,
+        'reference_catalog_xy': reference_catalog_xy
+    })
     # reg = os.path.join(os.getenv("DATA_DIR"), "%s.reg" % (ccd_image))
     # mes = os.path.join(os.getenv("DATA_DIR"), "%s.mes" % (ccd_image))
 
@@ -172,7 +176,7 @@ def run_praia_astrometry(idx, ccd_id, praia_header_output, catalog,  params_file
     # os.remove(reg)
     # os.remove(mes)
 
-    if os.path.exists(xy):
+    if os.path.exists(reference_catalog_xy):
         outputs = dict({
             'id': idx,
             'ccd_id': ccd_image,
