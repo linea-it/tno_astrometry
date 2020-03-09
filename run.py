@@ -203,6 +203,7 @@ try:
             "Reference catalog was converted to PRAIA format in %s. Filename: [%s]" % (humanize.naturaldelta(convert_catalog_exec_time), gaia_dr2_catalog))
 
         catalog_name = 'gaia_dr2'
+        result['reference_catalog_csv'] = input_catalog
     else:
         catalog_name = catalog
 
@@ -260,7 +261,6 @@ try:
 
     for future in futures:
         xy, output = future.result()
-
         if output is not None:
             # Guardar os outputs no json de resultado
             result['outputs'][output['ccd_id']] = output
@@ -291,17 +291,16 @@ try:
     # TODO: REMOVER ESTE BLOCO
 
     # Garantir que o Dataframe está ordenado pelo date_obs
-    df_ccd_images = df_ccd_images.sort_values(by=['date_obs'])
+    # df_ccd_images = df_ccd_images.sort_values(by=['date_obs'])
 
     # Filtrar pelos ccds Available e que geraram XY
     df_list_xy = df_ccd_images[(df_ccd_images['available'] == True) & (
         df_ccd_images['reference_catalog_xy'] is not None)]
 
-    # Gerar uma lista com os arquivos de Astrometrias gerado para catalogo de referencia.
+    # Criar o arquivo de Output da Astrometria, "ast_out.txt",
+    # uma lista com os arquivos de Astrometrias gerado para catalogo de referencia.
     praia_astrometry_output = os.path.join(
         os.getenv("DATA_DIR"), "ast_out.txt")
-
-    # Criar o arquivo de Output da Astrometria, "ast_out.txt",
     # este arquivo contem o path para os xy um em cada linha.
     df_list_xy.to_csv(
         praia_astrometry_output, columns=['reference_catalog_xy'], index=False, header=False)
@@ -395,16 +394,17 @@ try:
 
     logging.info("Praia Targets executed in %s" %
                  humanize.naturaldelta(targets_exec_time))
-
     # -----------------------------------------------------------------------------------------------------
     # Plot Astrometry - CCD X Stars X Target
     # -----------------------------------------------------------------------------------------------------
-    if enable_plot is True and result['target_offset'] is not None:
-
+    # Só executa se o Parametro enable_plot for True, se tiver algum resultado no Target_Offset e tiver 
+    # o catalogo de referencia.
+    if enable_plot is True and result['target_offset'] is not None and result['reference_catalog_csv'] is not None:
         plot_t0 = datetime.now()
 
-        # Filtrar o Dataframe pelas imagens disponivies.
-        df_ccds = df_ccd_images[df_ccd_images['available'] == True]
+        # Ler o resultado do Targets Offset, que contem apenas os CCDs que tiveram posiçoes detectadas
+        df_targets = read_targets_offset(os.path.join(
+            os.getenv("DATA_DIR"), result['target_offset']['filename']))
 
         # Ler o arquivo Catalogo de estrelas
         if result['reference_catalog_csv']:
@@ -412,46 +412,40 @@ try:
         else:
             df_stars = pd.DataFrame()
 
-        # Ler arquivo Targets Offset
-        df_targets = read_targets_offset(os.path.join(
-            os.getenv("DATA_DIR"), result['target_offset']['filename']))
-
         i = 0
-        for idx in result['outputs']:
-            ccd_result = result['outputs'][idx]
-
+        # Para Cada Posição detectada. gerar o plot. 
+        for ccd_id, target in df_targets.iterrows():
             t0 = datetime.now()
 
-            # filtrar a lista de ccd pelo id
-            # ccd = df_ccds.loc[df_ccds['id'] ==
-            #                   int(ccd_result['ccd_id'])].iloc[0]
-            ccd = df_ccds.iloc[[ccd_result['ccd_id']]]
-
-            # TODO: Conferer essa parte da execucao.
+            # Filtrar no Dataframe com todos os ccds, o CCD relacionado oa Target
+            ccd = df_ccd_images.loc[ccd_id]
 
             # Filtrar o catalogo de estrelas pelo ccd
-            stars = df_stars.loc[df_stars['ccd_id'] == int(ccd['id'])]
+            stars = df_stars.loc[df_stars['ccd_id'] == int(ccd_id)]
 
-            targets = df_targets.loc[df_targets['ccd_image'].str.contains(
-                str(ccd['id'])) == True]
+            # Nome original do CCD, sem a extensao .fits
+            ccd_filename = os.path.splitext(os.path.basename(ccd['filename']))[0]
 
             plot_filepath = os.path.join(
-                os.getenv("DATA_DIR"), '%s.ast_plot.png' % ccd['id'])
-            plot = plotStarsCCD(asteroid, ccd, stars, targets, plot_filepath)
+                os.getenv("DATA_DIR"), '%s.ast_plot.png' % ccd_filename)
+            plot = plotStarsCCD(asteroid, ccd, stars, target, plot_filepath)
 
             # Guardar o plot nos outputs do ccd
-            result['outputs'][idx]['files'].append({
+            result['outputs'][str(ccd_id)]['files'].append({
                 'catalog': None,
                 'filename': os.path.basename(plot),
                 'file_size': os.path.getsize(plot),
                 'extension': os.path.splitext(plot)[1]
             })
 
+            # Associar este Plot com o ccd no df_ccd_images.
+            df_ccd_images.at[ccd_id, 'ast_plot'] = os.path.basename(plot)
+
             t1 = datetime.now()
             tdelta = t1 - t0
 
-            logging.info("Plot [%s] created for ccd %s in %s." % (
-                i, ccd['id'], humanize.naturaldelta(tdelta)))
+            logging.info("Plot [%s] [%s] created for ccd %s in %s." % (
+                i, plot_filepath, ccd_id, humanize.naturaldelta(tdelta)))
 
             i += 1
 
@@ -464,6 +458,9 @@ try:
             'execution_time': plot_tdelta.total_seconds(),
         })
 
+    dataframe_path = os.path.join(
+        os.getenv("DATA_DIR"), "ccd_images_dataframe.csv")
+    df_ccd_images.to_csv(dataframe_path, sep=';')        
 
 except Exception as e:
     logging.error("Error: [ %s ]" % e)

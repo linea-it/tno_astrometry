@@ -141,7 +141,7 @@ def run_praia_astrometry(idx, ccd_id, praia_header_output, catalog,  params_file
         if process.returncode > 0:
 
             raise Exception(
-                "Failed to run PRAIA Astrometry. See log [%s] for more information" % exec_log)
+                "Astrometry IDX[%s] CCD ID [%s]- Failed to run PRAIA Astrometry. See log [%s] for more information" % (idx, ccd_id, exec_log))
 
     # Verificar se o arquivo xy foi gerado.
     ccd_image_path = np.loadtxt(
@@ -153,7 +153,7 @@ def run_praia_astrometry(idx, ccd_id, praia_header_output, catalog,  params_file
     reference_catalog_xy = os.path.join(os.getenv("DATA_DIR"), "%s.%s.rad.xy" %
                                         (ccd_image, catalog))
     xy = dict({
-        'ccd_id': ccd_image,
+        'ccd_id': int(ccd_image),
         'reference_catalog_xy': reference_catalog_xy
     })
     # reg = os.path.join(os.getenv("DATA_DIR"), "%s.reg" % (ccd_image))

@@ -27,14 +27,17 @@ def read_ccd_image_csv(filepath):
     )
     # Adicioanar colunas ao Dataframe.
     # Available = Bolean, inicia vazia, depois recebe True ou False caso a imagem exista no diretório.
-    df['available'] = ""
+    df['available'] = False
     # Original Path = String, path original para o arquivo, antes de ser criado o link, neste ponto o filename ainda é o nome do CCD.
     df['original_path'] = ""
     # Current Path = String, path atual da imagem, aqui já é um link simbolico onde o nome do arquivo passa a ser o CCD_ID.
     df['current_path'] = ""
     # Reference Catalog xy = String, path para o resultado da astrometria, especifico para o catalogo de referenceia, esta coluna é para facilitar o acesso a este arquivo.
     # e para facilitar a associação do resultado com o CCD.
-    df['reference_catalog_xy'] = ""
+    df['reference_catalog_xy'] = None
+
+    # Filename para o Plot do CCD com as posições das estrelas e do Asteroid.
+    df['ast_plot'] = ""
 
     # Usar o id como index no Dataframe. é utila para alterar ou incluir colunas nas linhas pelo id.
     df = df.set_index('id')
@@ -175,6 +178,11 @@ def read_targets_offset(filepath):
     )
 
     df['ra'] = df['ra'].apply(lambda x: x*15)
+
+    # Cria uma coluna id, extraindo o CCD_ID do filename contido no ccd_image.
+    df['id'] = df['ccd_image'].apply(lambda x: int(os.path.splitext(os.path.basename(x))[0]))
+    # Seta o ccd_id como index do dataframe
+    df = df.set_index('id')
 
     return df
 

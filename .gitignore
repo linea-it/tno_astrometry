@@ -38,4 +38,6 @@ venv
 ccd_images/
 data/
 external_catalogs/
+bsp_planetary/
+finals2000A.all
 __pycache__

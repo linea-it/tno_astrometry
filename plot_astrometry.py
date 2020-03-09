@@ -50,7 +50,8 @@ def plotStarsCCD(asteroid, ccd, stars, targets, output):
                      color='#ff3300', ecolor='#222831', mec='white', capsize=0, ms=6, mew=2)
 
         # Plot Labels
-        plt.title('CCD %s' % ccd['id'])
+        ccd_filename = os.path.splitext(os.path.basename(ccd['filename']))[0]
+        plt.title(ccd_filename)
         plt.xlabel('RA (deg)')
         plt.ylabel('Dec (deg)')
         plt.legend()
