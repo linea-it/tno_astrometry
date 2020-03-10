@@ -118,7 +118,7 @@ def execute_astrometry(idx, header, catalog, catalog_code, logging):
 
     except Exception as e:
         logging.error(e)
-        logging.error(traceback.format_exc())
+        # logging.error(traceback.format_exc())
         return None, None
 
 

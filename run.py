@@ -267,6 +267,9 @@ try:
             # Adicionar o path dos arquivo de 'astrometria catalogo de refentecia' ao Dataframe na coluna referece_catalog_xy
             df_ccd_images.at[xy['ccd_id'],
                              'reference_catalog_xy'] = xy['reference_catalog_xy']
+        # TODO: Alguns CCDs podem falhar e não gerar o XY. 
+        # para estes casos é interessante registrar o erro, 
+        # hoje está apenas no log e o ccd fica sem outputs, mas não indica em qual parte falhou. 
 
     # APENAS PARA DEBUG Criar uma lista xy com os resultados xy do catalogo de referencia.
     # TODO: REMOVER ESTE BLOCO
@@ -295,7 +298,7 @@ try:
 
     # Filtrar pelos ccds Available e que geraram XY
     df_list_xy = df_ccd_images[(df_ccd_images['available'] == True) & (
-        df_ccd_images['reference_catalog_xy'] is not None)]
+        df_ccd_images.reference_catalog_xy.notnull())]
 
     # Criar o arquivo de Output da Astrometria, "ast_out.txt",
     # uma lista com os arquivos de Astrometrias gerado para catalogo de referencia.
@@ -332,6 +335,8 @@ try:
     dates_jd = np.loadtxt(praia_header_output, dtype=str,
                           usecols=(13,), ndmin=1)
     logging.info("DATES JD: [%s]" % len(dates_jd))
+
+    # TODO: usar apenas datas, para ccds que geraram o xy.
 
     # Criar o arquivo de Targets
     location = [obs_location['lon'], obs_location['lat'], obs_location['ele']]
