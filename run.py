@@ -15,11 +15,14 @@ from tempfile import NamedTemporaryFile
 import humanize
 import numpy as np
 import pandas as pd
-from common import (create_symlink_for_images, get_image_by_id,
-                    get_stars_by_ccd, get_targets_by_ccd_id,
-                    read_ccd_image_csv, read_stars_catalog,
-                    read_targets_offset, remove_symlink_for_images, location_by_obs_code)
 
+from common import (check_bsp_jpl, check_bsp_planetary, check_ccd_images_csv,
+                    check_leap_seconds, create_symlink_for_images,
+                    get_image_by_id, get_stars_by_ccd, get_targets_by_ccd_id,
+                    location_by_obs_code, read_ccd_image_csv,
+                    read_stars_catalog, read_targets_offset,
+                    remove_symlink_for_images)
+from gaia_dr2 import gaia_dr2_to_praia_catalog
 from plot_astrometry import plotStarsCCD
 from praia_astrometry import (execute_astrometry, get_catalog_code,
                               run_praia_astrometry)
@@ -79,12 +82,16 @@ if basepath is not None and basepath is not '':
 
 # Setup Log file
 logfile = os.path.join(os.getenv("DATA_DIR"), "astrometry.log")
-logging.basicConfig(
-    filename=logfile,
-    level=logging.INFO,
-    format='%(asctime)s [%(levelname)s] %(message)s')
 if debug:
-    logging.setLevel(logging.DEBUG)
+    logging.basicConfig(
+        filename=logfile,
+        level=logging.DEBUG,
+        format='%(asctime)s [%(levelname)s] %(message)s')
+else:
+    logging.basicConfig(
+        filename=logfile,
+        level=logging.INFO,
+        format='%(asctime)s [%(levelname)s] %(message)s')
 
 
 # Result json
@@ -92,6 +99,7 @@ result = dict({
     'asteroid': asteroid,
     'images': 0,
     'available_images': 0,
+    'not_available_images': 0,
     'processed_images': 0,
     'reference_catalog_csv': None,
     'bsp_jpl': None,
@@ -110,107 +118,94 @@ result = dict({
 
 
 try:
+    logging.info(
+        "--------------------------------------------------------------------------------------")
     logging.info("Start Astrometry pipeline")
     logging.info("Asteroid: [ %s ]" % asteroid)
 
-    # -----------------------------------------------------------------------------------------------------
-    # Imagens / CCDs
-    # -----------------------------------------------------------------------------------------------------
-    ccd_images_csv = os.path.join(
-        os.getenv("DATA_DIR"), str(ccd_images_filename))
-    if not os.path.exists(ccd_images_csv):
-        msg = "csv file with ccds information not found. Filename: [%s]" % ccd_images_csv
-        logging.error(msg)
-        raise Exception(msg)
-
-    # Ler o Arquivo ccd_images.csv
-    df_ccd_images = read_ccd_image_csv(ccd_images_csv)
-    result['images'] = len(df_ccd_images)
-    logging.info("CCD Images: [ %s ]" % result['images'])
-
-    # Criar link para imagens no mesmo diretorio dos dados.
-    images = create_symlink_for_images(df_ccd_images)
-    result['available_images'] = len(images)
-    logging.info(
-        "Created Symbolic links for images. Links [ %s ]" % result['available_images'])
-
-    # -----------------------------------------------------------------------------------------------------
-    # Catalogo de referencia
-    # -----------------------------------------------------------------------------------------------------
-    catalog_name = None
-
-    if catalog == 'gaia2':
-        # Procurar um arquivo csv no diretorio de data para converter para o formato do PRAIA.
-        catalog_filename = 'gaia_dr2.csv'
-        input_catalog = os.path.join(os.getenv("DATA_DIR"), catalog_filename)
-        gaia_dr2_catalog = os.path.join(
-            os.getenv("DATA_DIR"), "%s.cat" % os.path.splitext(catalog_filename)[0])
-
-        if not os.path.exists(input_catalog):
-            msg = "Catalog file not found. to use gaia2 must have in /data a csv file with the name gaia_dr2.csv."
-            logging.error(msg)
-            raise Exception(msg)
-
-        result['reference_catalog_csv'] = input_catalog
-
-        logging.debug(
-            "Converting User Catalog GAIA DR2 to PRAIA format. Filename: [%s]" % input_catalog)
-
-        with open(gaia_dr2_catalog, 'w') as fp:
-            process = subprocess.Popen(["%s %s" % (os.getenv("CDS2REF"), input_catalog)],
-                                       stdin=subprocess.PIPE, stdout=fp, shell=True)
-        process.communicate()
-
-        if not os.path.exists(gaia_dr2_catalog):
-            msg = "Catalog file was not generated. Filename: [%s]" % gaia_dr2_catalog
-            logging.error(msg)
-            raise Exception(msg)
-
-        logging.info(
-            "Reference catalog was converted to PRAIA format. Filename: [%s]" % gaia_dr2_catalog)
-
-        catalog_name = os.path.splitext(catalog_filename)[0]
-    else:
-        catalog_name = catalog
+    # Verificar todos os Imputs necessários
 
     # -----------------------------------------------------------------------------------------------------
     # BSP JPL
     # -----------------------------------------------------------------------------------------------------
-    bsp_jpl_filename = "%s.bsp" % asteroid
-    bsp_jpl = os.path.join(os.getenv("DATA_DIR"), bsp_jpl_filename)
-    if not os.path.exists(bsp_jpl):
-        msg = "BSP JPL file not found. Filename: [%s]" % bsp_jpl
-        logging.error(msg)
-        raise Exception(msg)
-
+    bsp_jpl = check_bsp_jpl(asteroid)
+    bsp_jpl_filename = os.path.basename(bsp_jpl)
     result['bsp_jpl'] = bsp_jpl_filename
     logging.info("BSP JPL: [%s]" % bsp_jpl)
 
     # -----------------------------------------------------------------------------------------------------
     # BSP Planetary
     # -----------------------------------------------------------------------------------------------------
-    bsp_planets_filename = os.getenv("BSP_PLANETARY")
-    bsp_planets = os.path.join(os.getenv("DATA_DIR"), bsp_planets_filename)
-    if not os.path.exists(bsp_planets):
-        # Se nao existir no data, criar link
-        os.symlink(os.path.join(os.getenv("BSP_PLANETARY_PATH"),
-                                bsp_planets_filename), bsp_planets)
-
+    bsp_planets = check_bsp_planetary()
+    bsp_planets_filename = os.path.basename(bsp_planets)
     result['bsp_planetary'] = bsp_planets_filename
     logging.info("BSP PLANETARY: [%s]" % bsp_planets)
 
     # -----------------------------------------------------------------------------------------------------
     # Leap Seconds
     # -----------------------------------------------------------------------------------------------------
-    leap_sec_filename = os.getenv("LEAP_SENCOND")
-    leap_sec = os.path.join(os.getenv("DATA_DIR"), leap_sec_filename)
-    if not os.path.exists(leap_sec):
-        # Se nao existir no data, criar link
-        os.symlink(os.path.join(os.getenv("LEAP_SENCOND_PATH"),
-                                leap_sec_filename), leap_sec)
-
+    leap_sec = check_leap_seconds()
+    leap_sec_filename = os.path.basename(leap_sec)
     result['leap_second'] = leap_sec_filename
     logging.info("LEAP SECONDS: [%s]" % leap_sec)
+
+    # -----------------------------------------------------------------------------------------------------
+    # Imagens / CCDs
+    # IMPORTANTE: A lista de imagens OBRIGATÓRIAMENTE deve estar ordenada por data.
+    # o csv, pode estar em qualquer ordem, mais a função que le o csv e retorna o dataframe já ordena.
+    # Esta ordem deve ser mantida durante toda a execução.
+    # -----------------------------------------------------------------------------------------------------
+    ccd_images_csv = check_ccd_images_csv(ccd_images_filename)
+    ccd_images_filename = os.path.basename(ccd_images_csv)
+
+    # Ler o Arquivo ccd_images.csv
+    df_ccd_images = read_ccd_image_csv(ccd_images_csv)
+
+    # Criar link para imagens disponiveis, no mesmo diretorio dos dados.
+    # Dataframe de ccds + colunas: original_path e current_path (que o link simbolico) e avalilable.
+    df_ccd_images = create_symlink_for_images(df_ccd_images, logging)
+
+    # Dataframe com todas os ccds disponiveis.
+    df_available_ccds = df_ccd_images[df_ccd_images['available'] == True]
+    # Dataframe com todos os ccds que não estão disponiveis
+    df_not_available_ccds = df_ccd_images[df_ccd_images['available'] == False]
+
+    # Array com os paths das imagens disponiveis, já considerando os link simbolicos.
+    images = df_available_ccds['current_path'].tolist()
+
+    result['images'] = len(df_ccd_images)
+    result['available_images'] = len(df_available_ccds)
+    result['not_available_images'] = len(df_not_available_ccds)
+
+    logging.info("CCD Images: [%s] Availables: [%s] Not Availables: [%s]" % (
+        result['images'], result['available_images'], result['not_available_images']))
+
+    if result['available_images'] == 0:
+        raise Exception("No CCD images available for this Asteroid")
+
+   # -----------------------------------------------------------------------------------------------------
+   # Catalogo de referencia
+   # -----------------------------------------------------------------------------------------------------
+    if catalog == 'gaia2':
+        # Para o Catalogo GAIA DR2 é necessário converter para o formato do PRAIA.
+        convert_catalog_t0 = datetime.now()
+
+        logging.debug(
+            "Converting User Catalog GAIA DR2 to PRAIA format.")
+
+        input_catalog = os.path.join(os.getenv("DATA_DIR"), 'gaia_dr2.csv')
+        gaia_dr2_catalog = gaia_dr2_to_praia_catalog(input_catalog)
+
+        convert_catalog_t1 = datetime.now()
+        convert_catalog_exec_time = convert_catalog_t1 - convert_catalog_t0
+
+        logging.info(
+            "Reference catalog was converted to PRAIA format in %s. Filename: [%s]" % (humanize.naturaldelta(convert_catalog_exec_time), gaia_dr2_catalog))
+
+        catalog_name = 'gaia_dr2'
+        result['reference_catalog_csv'] = input_catalog
+    else:
+        catalog_name = catalog
 
     # -----------------------------------------------------------------------------------------------------
     # Execucao do PRAIA Header Extraction
@@ -264,19 +259,56 @@ try:
     # Esperar todas as execucoes.
     wait(futures)
 
-    listXY = []
     for future in futures:
         xy, output = future.result()
-
         if output is not None:
-            listXY.append(xy)
+            # Guardar os outputs no json de resultado
             result['outputs'][output['ccd_id']] = output
+            # Adicionar o path dos arquivo de 'astrometria catalogo de refentecia' ao Dataframe na coluna referece_catalog_xy
+            df_ccd_images.at[xy['ccd_id'],
+                             'reference_catalog_xy'] = xy['reference_catalog_xy']
+        # TODO: Alguns CCDs podem falhar e não gerar o XY. 
+        # para estes casos é interessante registrar o erro, 
+        # hoje está apenas no log e o ccd fica sem outputs, mas não indica em qual parte falhou. 
 
-    # guardar o path dos arquivos xy em um arquivo de output.
+    # APENAS PARA DEBUG Criar uma lista xy com os resultados xy do catalogo de referencia.
+    # TODO: REMOVER ESTE BLOCO
+    # ids = []
+    # for id, image in df_available_ccds.iterrows():
+    #     ids.append(id)
+
+    # print(ids)
+    # import random
+    # random.shuffle(ids)
+    # print(ids)
+
+    # listXY = []
+    # for id in ids:
+    #     listXY.append(
+    #         {'ccd_id': id, 'reference_catalog_xy': '%s.ast_reduction.gaia_dr2.txt' % id})
+
+    # for xy in listXY:
+    #     df_ccd_images.at[xy['ccd_id'],
+    #                      'reference_catalog_xy'] = xy['reference_catalog_xy']
+
+    # TODO: REMOVER ESTE BLOCO
+
+    # Garantir que o Dataframe está ordenado pelo date_obs
+    # df_ccd_images = df_ccd_images.sort_values(by=['date_obs'])
+
+    # Filtrar pelos ccds Available e que geraram XY
+    df_list_xy = df_ccd_images[(df_ccd_images['available'] == True) & (
+        df_ccd_images.reference_catalog_xy.notnull())]
+
+    # Criar o arquivo de Output da Astrometria, "ast_out.txt",
+    # uma lista com os arquivos de Astrometrias gerado para catalogo de referencia.
     praia_astrometry_output = os.path.join(
         os.getenv("DATA_DIR"), "ast_out.txt")
-    np.savetxt(praia_astrometry_output, listXY, fmt='%s')
+    # este arquivo contem o path para os xy um em cada linha.
+    df_list_xy.to_csv(
+        praia_astrometry_output, columns=['reference_catalog_xy'], index=False, header=False)
 
+    # Guardar os tempos de execucao total da astrometria.
     astrometry_t1 = datetime.now()
     astrometry_exec_time = astrometry_t1 - astrometry_t0
 
@@ -284,24 +316,27 @@ try:
         'start': astrometry_t0.isoformat(),
         'finish': astrometry_t1.isoformat(),
         'execution_time': astrometry_exec_time.total_seconds(),
+        "filename": os.path.basename(praia_astrometry_output),
     })
 
-    logging.info("Praia Astrometry executed in %s" %
-                 humanize.naturaldelta(astrometry_exec_time))
+    if len(df_list_xy) == 0:
+        raise Exception(
+            "PRAIA Astrometry was performed but generated no results.")
+
+    logging.info("Praia Astrometry executed %s CCDs in %s" %
+                 (len(df_list_xy), humanize.naturaldelta(astrometry_exec_time)))
 
     # -----------------------------------------------------------------------------------------------------
     # Execucao do PRAIA Targets
     # -----------------------------------------------------------------------------------------------------
-    if len(listXY) == 0:
-        raise Exception(
-            "PRAIA Astrometry was performed but generated no results.")
-
     targets_t0 = datetime.now()
 
     # Lista com datas em JD extraidas do resultado do Praia Headers
     dates_jd = np.loadtxt(praia_header_output, dtype=str,
                           usecols=(13,), ndmin=1)
     logging.info("DATES JD: [%s]" % len(dates_jd))
+
+    # TODO: usar apenas datas, para ccds que geraram o xy.
 
     # Criar o arquivo de Targets
     location = [obs_location['lon'], obs_location['lat'], obs_location['ele']]
@@ -364,16 +399,17 @@ try:
 
     logging.info("Praia Targets executed in %s" %
                  humanize.naturaldelta(targets_exec_time))
-
     # -----------------------------------------------------------------------------------------------------
     # Plot Astrometry - CCD X Stars X Target
     # -----------------------------------------------------------------------------------------------------
-    if enable_plot is True and result['target_offset'] is not None:
-
+    # Só executa se o Parametro enable_plot for True, se tiver algum resultado no Target_Offset e tiver 
+    # o catalogo de referencia.
+    if enable_plot is True and result['target_offset'] is not None and result['reference_catalog_csv'] is not None:
         plot_t0 = datetime.now()
 
-        # Ler o arquivo de ccds
-        df_ccds = read_ccd_image_csv(ccd_images_csv)
+        # Ler o resultado do Targets Offset, que contem apenas os CCDs que tiveram posiçoes detectadas
+        df_targets = read_targets_offset(os.path.join(
+            os.getenv("DATA_DIR"), result['target_offset']['filename']))
 
         # Ler o arquivo Catalogo de estrelas
         if result['reference_catalog_csv']:
@@ -381,43 +417,40 @@ try:
         else:
             df_stars = pd.DataFrame()
 
-        # Ler arquivo Targets Offset
-        df_targets = read_targets_offset(os.path.join(
-            os.getenv("DATA_DIR"), result['target_offset']['filename']))
-
         i = 0
-        for idx in result['outputs']:
-            ccd_result = result['outputs'][idx]
-
+        # Para Cada Posição detectada. gerar o plot. 
+        for ccd_id, target in df_targets.iterrows():
             t0 = datetime.now()
 
-            # filtrar a lista de ccd pelo id
-            ccd = df_ccds.loc[df_ccds['id'] ==
-                              int(ccd_result['ccd_id'])].iloc[0]
+            # Filtrar no Dataframe com todos os ccds, o CCD relacionado oa Target
+            ccd = df_ccd_images.loc[ccd_id]
 
             # Filtrar o catalogo de estrelas pelo ccd
-            stars = df_stars.loc[df_stars['ccd_id'] == int(ccd['id'])]
+            stars = df_stars.loc[df_stars['ccd_id'] == int(ccd_id)]
 
-            targets = df_targets.loc[df_targets['ccd_image'].str.contains(
-                str(ccd['id'])) == True]
+            # Nome original do CCD, sem a extensao .fits
+            ccd_filename = os.path.splitext(os.path.basename(ccd['filename']))[0]
 
             plot_filepath = os.path.join(
-                os.getenv("DATA_DIR"), '%s.ast_plot.png' % ccd['id'])
-            plot = plotStarsCCD(asteroid, ccd, stars, targets, plot_filepath)
+                os.getenv("DATA_DIR"), '%s.ast_plot.png' % ccd_filename)
+            plot = plotStarsCCD(asteroid, ccd, stars, target, plot_filepath)
 
             # Guardar o plot nos outputs do ccd
-            result['outputs'][idx]['files'].append({
+            result['outputs'][str(ccd_id)]['files'].append({
                 'catalog': None,
                 'filename': os.path.basename(plot),
                 'file_size': os.path.getsize(plot),
                 'extension': os.path.splitext(plot)[1]
             })
 
+            # Associar este Plot com o ccd no df_ccd_images.
+            df_ccd_images.at[ccd_id, 'ast_plot'] = os.path.basename(plot)
+
             t1 = datetime.now()
             tdelta = t1 - t0
 
-            logging.info("Plot [%s] created for ccd %s in %s." % (
-                i, ccd['id'], humanize.naturaldelta(tdelta)))
+            logging.info("Plot [%s] [%s] created for ccd %s in %s." % (
+                i, plot_filepath, ccd_id, humanize.naturaldelta(tdelta)))
 
             i += 1
 
@@ -430,6 +463,9 @@ try:
             'execution_time': plot_tdelta.total_seconds(),
         })
 
+    dataframe_path = os.path.join(
+        os.getenv("DATA_DIR"), "ccd_images_dataframe.csv")
+    df_ccd_images.to_csv(dataframe_path, sep=';')        
 
 except Exception as e:
     logging.error("Error: [ %s ]" % e)

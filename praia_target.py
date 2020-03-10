@@ -1,12 +1,11 @@
+from astropy.utils import iers
+from astropy.time import Time
+from astropy.coordinates import GCRS, EarthLocation
 import os
 import subprocess
 
 import numpy as np
 import spiceypy as spice
-from astropy.coordinates import GCRS, EarthLocation
-from astropy.time import Time
-from astropy.utils import iers
-
 # Deligar o auto Download do Finals2000
 # https://docs.astropy.org/en/stable/utils/iers.html#working-offline
 iers.conf.auto_download = False
