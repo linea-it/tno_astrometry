@@ -56,6 +56,7 @@ COPY praia_astrometry.py $APP_PATH
 COPY praia_target.py $APP_PATH
 COPY common.py $APP_PATH
 COPY plot_astrometry.py $APP_PATH
+COPY gaia_dr2.py $APP_PATH
 COPY iers_table.py $APP_PATH
 
 # Compile Praia Header Extraction
