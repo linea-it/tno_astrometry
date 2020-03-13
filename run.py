@@ -173,6 +173,8 @@ try:
     # Array com os paths das imagens disponiveis, já considerando os link simbolicos.
     images = df_available_ccds['current_path'].tolist()
 
+    print(images)
+
     result['images'] = len(df_ccd_images)
     result['available_images'] = len(df_available_ccds)
     result['not_available_images'] = len(df_not_available_ccds)
@@ -182,6 +184,9 @@ try:
 
     if result['available_images'] == 0:
         raise Exception("No CCD images available for this Asteroid")
+
+    
+    raise Exception("Parou aqui")
 
    # -----------------------------------------------------------------------------------------------------
    # Catalogo de referencia
@@ -483,12 +488,12 @@ finally:
     remove_symlink_for_images()
 
     # Remover o link BSP Planetary
-    if result['bsp_planetary'] is not None:
-        os.unlink(os.path.join(os.getenv("DATA_DIR"), result['bsp_planetary']))
+    # if result['bsp_planetary'] is not None:
+    #     os.unlink(os.path.join(os.getenv("DATA_DIR"), result['bsp_planetary']))
 
-    # Remover o link do Leap Second
-    if result['leap_second'] is not None:
-        os.unlink(os.path.join(os.getenv("DATA_DIR"), result['leap_second']))
+    # # Remover o link do Leap Second
+    # if result['leap_second'] is not None:
+    #     os.unlink(os.path.join(os.getenv("DATA_DIR"), result['leap_second']))
 
     # Remover o link para o diretorio data_dir
     if os.path.islink(os.getenv("DATA_DIR")):

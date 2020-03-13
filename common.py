@@ -3,7 +3,7 @@ import os
 import numpy as np
 import pandas as pd
 import fnmatch
-
+import time
 # def read_ccd_image_csv(filepath):
 #     return np.genfromtxt(filepath, dtype=None, delimiter=';', names=True, encoding='utf8')
 
@@ -73,11 +73,28 @@ def create_symlink_for_images(images, logging):
         origin = os.path.join(os.getenv("IMAGES_PATH"), image['filename'])
 
         if os.path.exists(origin):
+            # Se a imagem existir, verificar se tem um diretório para a imagem
+            # se nao tiver cria. 
+            image_name = os.path.splitext(image['filename'])[0]
+            ccd_dir = os.path.join(os.getenv("IMAGES_PATH"), image_name)
 
+            if not os.path.exists(ccd_dir):
+                os.makedirs(ccd_dir)
+                time.sleep(1)
+                logging.info("Created CCD directory: [%s]" % ccd_dir)
+
+            # Criar um link simbolico para a pasta do CCD usando uma abreviacao
+            # no caso o CCD_ID
+            ccd_dir_link = os.path.join(os.getenv("DATA_DIR"), str(image['id']))
+            os.symlink(ccd_dir, ccd_dir_link)
+            logging.info("Created Link for CCD dir: [%s -> %s]" % (ccd_dir_link, ccd_dir))
+
+            # Criar um link simbolico para a Imagem dentro do ccd_dir
             filename = os.path.basename(origin)
             filename = "%s.fits" % str(image['id'])
-            dest = os.path.join(os.getenv("DATA_DIR"), filename)
+            dest = os.path.join(ccd_dir_link, filename)
             os.symlink(origin, dest)
+            logging.info("Created Link for Image: [%s -> %s]" % (dest, origin))
 
             # Registra se a imagem esta disponivel ou nao.
             availables.append(True)
@@ -103,18 +120,39 @@ def create_symlink_for_images(images, logging):
 
 
 def remove_symlink_for_images():
-
+    print("remove_symlink")
     listOfFiles = os.listdir(os.getenv("DATA_DIR"))
-    pattern = "*.fits"
     for filename in listOfFiles:
-        if fnmatch.fnmatch(filename, pattern):
-            try:
-                os.unlink(os.path.join(os.getenv("DATA_DIR"), filename))
-            except Exception as e:
-                print(e)
+        # print("TESTE: %s" % filename)
 
-    # for image in images:
-    #     os.unlink(image)
+        filepath = os.path.join(os.getenv("DATA_DIR"), filename)
+
+        if os.path.islink(filepath):
+            print("é link: %s" % filepath)
+            # tenta listar os arquivos, se for uma pasta
+            if os.path.isdir(filepath):
+                for f in os.listdir(filepath):
+                    f_path = os.path.join(filepath, f)
+                    if os.path.islink(f_path):
+                        try:
+                            os.unlink(os.path.join(f_path))
+                        except Exception as e:
+                            print(e)
+            else:
+                try:
+                    os.unlink(os.path.join(filepath))
+                except Exception as e:
+                    print(e)
+
+        else:
+            print("nao é link: %s" % filepath)
+            # if os.path.isdir(filename):
+            
+            # try:
+            #     os.unlink(os.path.join(os.getenv("DATA_DIR"), filename))
+            # except Exception as e:
+            #     print(e)
+
 
 
 def read_stars_catalog(filepath):
